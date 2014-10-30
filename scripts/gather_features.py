@@ -26,7 +26,7 @@ jhack@stanford.edu
 '''
 import click
 import numpy as np
-from ModaliDB import *
+from ModalDB import *
 from schema import FrameSchema
 
 @click.option('--feature_name', 	help='Name of the feature to gather')
@@ -35,7 +35,7 @@ def gather_features(feature_name, outpath):
 
 	#=====[ Step 1: connect to db	]=====
 	@click.echo("---> Connecting to DB")
-	db = ModaliDB()
+	db = ModalDB()
 
 	#=====[ Step 2: gather features	]=====
 	@click.echo("---> Gathering features")

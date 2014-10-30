@@ -34,7 +34,7 @@ import click
 import os
 import numpy as np
 from sklearn import preprocessing, cluster
-from ModaliDB import *
+from ModalDB import *
 
 @click.command()
 @click.option('--inpath', 					help='path to file containing feature vectors')

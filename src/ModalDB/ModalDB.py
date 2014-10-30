@@ -1,11 +1,11 @@
 '''
-Class: ModaliDB
-===============
+Class: ModalDB
+==============
 
 Description:
 ------------
 	
-	Main class for interfacing with the ModaliDB
+	Main class for interfacing with the ModalDB
 
 
 ##############
@@ -20,13 +20,13 @@ from pymongo import MongoClient
 from Video import *
 
 
-class ModaliDB(object):
+class ModalDB(object):
 	"""
 		Example Usage:
 		--------------
 
 		# Initialization
-		mdb = ModaliDB(FrameSchema)
+		mdb = ModalDB(FrameSchema)
 
 		# Accessing videos 
 		video = mdb.get_video('...')
@@ -44,7 +44,7 @@ class ModaliDB(object):
 		#=====[ Step 1: Connect to MongoDB	]=====
 		try:
 			self.mongo_client = MongoClient()
-			self.db = self.mongo_client.ModaliDB
+			self.db = self.mongo_client.ModalDB
 		except:
 			raise Exception("Turn on MongoDB.")
 
@@ -108,7 +108,6 @@ class ModaliDB(object):
 		"""
 			returns a random video (unloaded)
 		"""
-
 		return self.get_video(self.videos.find_one()['_id'])
 
 
@@ -146,7 +145,7 @@ class ModaliDB(object):
 		"""
 			Returns a pprint of the frame schema 
 		"""
-		return '==========[ ModaliDB (Frame Storage) Schema ]==========\n %s' % pformat(self.schema)
+		return '==========[ ModalDB (Frame Storage) Schema ]==========\n %s' % pformat(self.schema)
 
 
 

@@ -27,7 +27,7 @@ jhack@stanford.edu
 ##############
 '''
 import click
-from ModaliDB import *
+from ModalDB import *
 from schema import FrameSchema
 
 
@@ -47,7 +47,7 @@ def Featurize(featurizer, replace):
 
 	#=====[ Step 2: Apply it	]=====
 	click.echo("---> Featurizing frames")
-	db = ModaliDB(FrameSchema)
+	db = ModalDB(FrameSchema)
 	for frame in db.iter_frames(verbose=True):
 		featurizer.featurize(frame)
 

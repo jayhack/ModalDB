@@ -20,7 +20,7 @@ import scipy as sp
 from scipy.io import loadmat, savemat
 from scipy.misc import imread, imsave
 
-from ModaliDB import Video, Frame
+from ModalDB import Video, Frame
 
 Schema = {
 	Frame: {
