@@ -31,7 +31,9 @@ from ModalDB import *
 @click.command()
 @click.option('--feature_names', '-f', 	help='Name of the feature to gather', multiple=True)
 @click.option('--outpaths', '-o',		help='Path to store resulting matrix', multiple=True)
-def gather_features(feature_names, outpaths):
+@click.option('--subsample_rate', '-s', help="for a given rate, 1/rate of all frames' features will be gathered",
+										default=1)
+def gather_features(feature_names, outpaths, subsample_rate):
 
 	#=====[ Step 1: Sanitize input	]=====
 	if not len(feature_names) == len(outpaths):
@@ -44,7 +46,7 @@ def gather_features(feature_names, outpaths):
 	#=====[ Step 2: Gather features	]=====
 	click.echo("---> Gathering features")
 	feature_lists = {k:[] for k in feature_names}
-	for frame in db.iter_frames(verbose=True):
+	for frame in db.iter_frames(verbose=True, subsample_rate=subsample_rate):
 		if not any([f[k] is None for k in feature_names]):
 			for k in feature_names:
 				feature_lists[k].append(frame[k])

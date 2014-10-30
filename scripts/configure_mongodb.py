@@ -74,11 +74,11 @@ def configure_mongodb(dbpath, schema_dict):
 		video['root_dir'] = os.path.join(videos_dir, video_name)
 		video['frames_dir'] = os.path.join(videos_dir, video_name, 'frames')
 
-		video['frames'] = []
+		video['frames'] = {}
 		for frame_name in sorted(os.listdir(video['frames_dir'])):
 			frame_dir = os.path.join(video['frames_dir'], frame_name)
 			frame = {'_id':frame_name, 'root_dir':frame_dir}
-			video['frames'].append(frame)
+			video['frames'][frame_name] = frame
 		click.echo('	---> Inserting video: %s' % video_name)
 		db.videos.insert(video)
 

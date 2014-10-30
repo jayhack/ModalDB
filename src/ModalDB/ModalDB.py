@@ -15,6 +15,7 @@ jhack@stanford.edu
 ##############
 '''
 import random
+from itertools import islice
 from pprint import pformat, pprint
 from pymongo import MongoClient
 from Video import *
@@ -123,13 +124,13 @@ class ModalDB(object):
 			yield v
 
 
-	def iter_frames(self, verbose=False):
+	def iter_frames(self, verbose=False, subsample_rate=1):
 		"""
 			iterates over all frames
 			verbose mode prints out the video names as well
 		"""
 		for v in self.iter_videos(verbose=verbose):
-			for f in v.iter_frames(verbose=verbose):
+			for f in v.iter_frames(verbose=verbose, subsample_rate=subsample_rate):
 				yield f
 
 

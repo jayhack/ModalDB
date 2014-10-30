@@ -5,7 +5,7 @@
 # contains the frames data in a pandas dataframe
 ####################
 import os
-import itertools
+from itertools import islice
 import random
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ class Video(DataObject):
 
 		"""
 		rows = []
-		for frame_dict in mongo_dict['frames']:
+		for frame_dict in mongo_dict['frames'].values():
 			frame = Frame(self.db, frame_dict, frame_dict['root_dir'])
 			d = {k:frame.item_exists(k) for k in frame.keys() if not k == '_id'}
 			d['_id'] = frame_dict['_id']
@@ -70,15 +70,13 @@ class Video(DataObject):
 
 	def get_frame(self, t):
 		"""
-			returns Frame object occurring at timestep t, loaded
-			returns None if t is too large. 
-			Note: t is 1-indexed
+			returns frame with '_id' = t
 		"""
-		if t > len(self):
+		if not t in self.frames_df.index:
 			return None
 		else:
-			row = self.frames_df.loc[t]
-			return Frame(self.db, self.mongo_dict['frames'][t], self.mongo_dict['frames'][t]['root_dir'])
+			mongo_dict = self.mongo_dict['frames'][str(t)]
+			return Frame(self.db, mongo_dict, mongo_dict['root_dir'])
 
 
 	def get_random_frame(self):
@@ -89,13 +87,13 @@ class Video(DataObject):
 		return self.get_frame(random.choice(self.frames_df.index))
 
 
-	def iter_frames(self, stepsize=1, verbose=False):
+	def iter_frames(self, verbose=False, subsample_rate=1):
 		"""
 			iterates over all frames
 			stepsize: describes how to subsample frames.
-				i.e. stepsize=2 means every other frame is returned 
+				i.e. subsample_rate=2 means every other frame is returned 
 		"""
-		for i in range(1, len(self)+1):
+		for i in islice(self.frames_df.index, 0, None, subsample_rate):
 			f = self.get_frame(i)
 			if verbose:
 				print '	', f
