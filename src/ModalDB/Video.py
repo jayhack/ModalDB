@@ -1,9 +1,19 @@
-####################
-# Class: Video
-# ------------
-# used to contain all information relevant to a single video
-# contains the frames data in a pandas dataframe
-####################
+'''
+Class: Video 
+============
+
+Description:
+------------
+	
+	Interface to individual videos and their contained 
+	data
+
+##################
+Jay Hack
+Fall 2014
+jhack@stanford.edu
+##################
+'''
 import os
 from itertools import islice
 import random
