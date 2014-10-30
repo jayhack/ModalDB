@@ -20,6 +20,12 @@ Usage:
 	python make_mongod_database.py --dbpath ./data --schema_dict schema.Schema
 
 
+Args:
+-----
+
+	--dbpath: path to directory containing data
+	--schema_dict: import location of python dict containing schema. Ex: schema.Schema
+
 ##############
 Jay Hack
 Fall 2014
@@ -38,7 +44,7 @@ from pymongo import MongoClient
 
 @click.command()
 @click.option('--dbpath', help='path to directory containing data')
-@click.option('--schema_dict', help='import location of python dict containing schema. Ex: schema.FrameSchema')
+@click.option('--schema_dict', help='import location of python dict containing schema. Ex: schema.Schema')
 def configure_mongodb(dbpath, schema_dict):
 	"""
 		Configures/initializes the mongob database
@@ -69,7 +75,6 @@ def configure_mongodb(dbpath, schema_dict):
 		video['frames_dir'] = os.path.join(videos_dir, video_name, 'frames')
 
 		video['frames'] = []
-		# print os.listdir(video['frames_dir'])
 		for frame_name in sorted(os.listdir(video['frames_dir'])):
 			frame_dir = os.path.join(video['frames_dir'], frame_name)
 			frame = {'_id':frame_name, 'root_dir':frame_dir}
