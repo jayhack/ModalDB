@@ -24,7 +24,7 @@ Args:
 -----
 
 	--dbpath: path to directory containing data
-	--schema_dict: import location of python dict containing schema. Ex: schema.Schema
+	--schema_file: import location of python dict containing schema. Ex: myproject.schema
 
 ##############
 Jay Hack
@@ -44,8 +44,8 @@ from pymongo import MongoClient
 
 @click.command()
 @click.option('--dbpath', help='path to directory containing data')
-@click.option('--schema_dict', help='import location of python dict containing schema. Ex: schema.Schema')
-def configure_mongodb(dbpath, schema_dict):
+@click.option('--schema_file', help='import location of python dict containing schema. Ex: myproject.schema')
+def configure_mongodb(dbpath, schema_file):
 	"""
 		Configures/initializes the mongob database
 	"""
@@ -60,10 +60,9 @@ def configure_mongodb(dbpath, schema_dict):
 
 	#=====[ Step 2: Set schema	]=====
 	click.echo("---> Setting DB schema")
-	splits = schema_dict.split('.')
-	module_name, dict_name = '.'.join(splits[:-1]), splits[-1]
-	schema_dict = __import__(module_name, fromlist=[dict_name])
-	db.schema = schema_dict
+	schema = __import__(schema_file)
+	db.schema = schema
+	print db.schema
 
 
 	#=====[ Step 3: Add Videos	]=====

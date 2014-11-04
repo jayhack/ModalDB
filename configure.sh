@@ -11,4 +11,4 @@ export PYTHONPATH=$PYTHONPATH:$CAFFE_ROOT_DIR/python
 export DYLD_FALLBACK_LIBRARY_PATH=/usr/local/cuda/lib:/usr/local/Cellar/hdf5/1.8.13/lib/:/usr/local/cuda/lib:/usr/local/Cellar/hdf5/1.8.13/lib/:/usr/local/cuda/lib:/Users/jayhack/anaconda/lib:/usr/local/lib:/usr/lib
 
 #===[ Configure DB ]===
-python scripts/configure_mongodb.py --dbpath $DATA_DIR --schema_dict schema.Schema
+python scripts/configure_mongodb.py --dbpath $DATA_DIR --schema_file schema

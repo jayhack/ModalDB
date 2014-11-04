@@ -75,7 +75,7 @@ class ModalDB(object):
 		"""
 			Displays the current schema 
 		"""
-		pprint(self.schema)
+		pprint(self.db.schema)
 
 
 
