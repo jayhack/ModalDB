@@ -61,8 +61,7 @@ def configure_mongodb(dbpath, schema_file):
 	#=====[ Step 2: Set schema	]=====
 	click.echo("---> Setting DB schema")
 	schema = __import__(schema_file)
-	db.schema = schema
-	print db.schema
+	db.schema = schema.Schema
 
 
 	#=====[ Step 3: Add Videos	]=====
