@@ -1,11 +1,11 @@
 '''
-Class: ModalDB
-==============
+Class: ModalClient
+==================
 
 Description:
 ------------
 	
-	Main class for interfacing with the ModalDB
+	Main class for interfacing with the MongoClient
 
 
 ##############
@@ -21,21 +21,21 @@ from pymongo import MongoClient
 from Video import *
 
 
-class ModalDB(object):
+class ModalClient(object):
 	"""
 		Example Usage:
 		--------------
 
 		# Initialization
-		mdb = ModalDB(FrameSchema)
+		mc = ModalClient(FrameSchema)
 
 		# Accessing videos 
-		video = mdb.get_video('...')
-		for video in mdb.iter_videos():
+		video = mc.get_video('...')
+		for video in mc.iter_videos():
 			...
 
 		# Directly Accessing Frames
-		for frame in mdb.iter_frames():
+		for frame in mc.iter_frames():
 			...
 
 	"""
@@ -45,13 +45,12 @@ class ModalDB(object):
 		#=====[ Step 1: Connect to MongoDB	]=====
 		try:
 			self.mongo_client = MongoClient()
-			self.db = self.mongo_client.ModalDB
+			self.db = self.mongo_client.Client
 		except:
 			raise Exception("Turn on MongoDB.")
 
 		#=====[ Step 2: Grab root from envvars	]=====
 		self.root = os.path.join(os.environ['DATA_DIR'], 'videos')
-		self.schema = self.db.schema
 
 
 	####################################################################################################
@@ -146,7 +145,7 @@ class ModalDB(object):
 		"""
 			Returns a pprint of the frame schema 
 		"""
-		return '==========[ ModalDB (Frame Storage) Schema ]==========\n %s' % pformat(self.schema)
+		return '==========[ Client (Frame Storage) Schema ]==========\n %s' % pformat(self.schema)
 
 
 

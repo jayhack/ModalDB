@@ -1,5 +1,5 @@
-__all__ = ['ModalDB', 'Video', 'Frame', 'CaffeCNN']
-from ModalDB import ModalDB
+__all__ = ['ModalClient', 'Video', 'Frame', 'CaffeCNN']
+from ModalClient import ModalClient
 from Video import Video
 from Frame import Frame
 from CaffeCNN import CaffeCNN
