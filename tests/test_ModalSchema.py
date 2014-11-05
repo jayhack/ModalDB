@@ -56,7 +56,6 @@ class Test_ModalSchema(unittest.TestCase):
 													}
 									}
 						}
-		ModalSchema(deepcopy(self.schema_ex)).save('./tests/data/.ModalDB_schema.pkl')
 
 
 
@@ -187,6 +186,7 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertTrue(schema.schema_dict[Frame]['image']['filename'] == 'image')
 		self.assertTrue(not 'filename' in schema.schema_dict[Video]['subtitles'])
 		os.remove('./tests/schema_temp.pkl')
+
 
 
 

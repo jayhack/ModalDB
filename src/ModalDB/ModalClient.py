@@ -43,12 +43,12 @@ class ModalClient(object):
 
 	"""
 
-	def __init__(self, schema=None):
+	def __init__(self, root=os.environ['DATA_DIR'], schema=None):
 		"""
 			Connect to MongoDB, load schema, find root path
 		"""
 		#=====[ Step 1: Grab root from envvars	]=====
-		self.root = os.environ['DATA_DIR']
+		self.root = root
 		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
 
 		#=====[ Step 2: Connect to MongoDB	]=====
@@ -93,7 +93,7 @@ class ModalClient(object):
 	
 	def load_schema(self):
 		"""
-			loads the schema from $DATA_DIR/.ModalDB_schema.pkl
+			loads the schema from [self.root]/.ModalDB_schema.pkl
 		"""
 		return ModalSchema(self.schema_path)
 
