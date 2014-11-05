@@ -56,6 +56,7 @@ class Test_ModalSchema(unittest.TestCase):
 													}
 									}
 						}
+		ModalSchema(deepcopy(self.schema_ex)).save('./tests/data/.ModalDB_schema.pkl')
 
 
 
