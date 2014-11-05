@@ -65,7 +65,7 @@ class ModalClient(object):
 			try:
 				self.schema = self.load_schema()
 			except:
-				raise Exception("You need to specify a schema! See ModalSchema")
+				raise Exception("You need to specify a schema! (or schema doesn't yet exist) See ModalSchema")
 
 
 
