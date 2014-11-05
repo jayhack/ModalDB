@@ -18,7 +18,9 @@ import random
 from itertools import islice
 from pprint import pformat, pprint
 from pymongo import MongoClient
-from Video import *
+
+from ModalSchema import ModalSchema
+from Video import Video
 
 
 class ModalClient(object):
@@ -40,17 +42,36 @@ class ModalClient(object):
 
 	"""
 
-	def __init__ (self):
-		
-		#=====[ Step 1: Connect to MongoDB	]=====
+	def __init__(self, schema=None):
+		"""
+			Connect to MongoDB, load schema, find root path
+		"""
+		#=====[ Step 1: Grab root from envvars	]=====
+		self.root = os.path.join(os.environ['DATA_DIR'], 'videos')
+
+		#=====[ Step 2: Connect to MongoDB	]=====
 		try:
 			self.mongo_client = MongoClient()
 			self.db = self.mongo_client.ModalDB
 		except:
 			raise Exception("Turn on MongoDB.")
 
-		#=====[ Step 2: Grab root from envvars	]=====
-		self.root = os.path.join(os.environ['DATA_DIR'], 'videos')
+		#=====[ Step 3: Load Schema	]=====
+		if not schema is None:
+			self.schema = schema
+		else:
+			try:
+				self.schema = self.load_schema()
+			except:
+				raise Exception("You need to specify a schema! See ModalSchema")
+
+
+
+	def __del__(self):
+		"""
+			Save schema 
+		"""
+		self.save_schema()
 
 
 
@@ -67,19 +88,40 @@ class ModalClient(object):
 				client.drop_database(db_name)
 
 
-	
-
 
 
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
 
+	@property
+	def schema(self):
+		return self._schema
+	@schema.setter
+	def schema(self, value):
+		assert type(new_schema) == ModalSchema
+		self._schema = value
+	
+
+	def load_schema(self):
+		"""
+			loads the schema from $DATA_DIR/.ModalDB_schema.pkl
+		"""
+		return pickle.load(open(os.path.join(self.root, '.ModalDB_schema.pkl')))
+
+
+	def save_schema(self):
+		"""
+			saves the schema to $DATA_DIR/.ModalDB_schema.pkl
+		"""
+		self.schema.save(os.path.join(self.root, '.ModalDB_schema.pkl'))
+
+
 	def print_schema(self):
 		"""
 			Displays the current schema 
 		"""
-		pprint(self.db.schema)
+		raise NotImplementedError
 
 
 

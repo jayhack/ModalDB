@@ -55,7 +55,6 @@ def configure_mongodb(dbpath, schema_file):
 	click.echo("---> Resetting MongoDB")
 	client.reset_db()
 
-
 	#=====[ Step 2: Set schema	]=====
 	click.echo("---> Setting DB schema")
 	schema = __import__(schema_file)

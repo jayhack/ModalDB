@@ -60,12 +60,39 @@ class ModalSchema(object):
 	data_modes = ['memory', 'disk', 'dynamic']
 
 
-	def __init__(self, schema_dict):
+	def __init__(self, schema_dict=None, schema_path=None):
 		"""
-			parses and validates the schema_dict
+			parses and validates either schema_dict or schema_path
 		"""
-		#=====[ Step 1: validate schema_dict	]=====
-		self.schema_dict = self.parse_schema(schema_dict)
+		if not schema_dict is None and not schema_path is None:
+			raise Exception("specify *either* a schema dict or a path to load from ")
+
+		if not schema_dict is None:
+			self.schema_dict = self.parse_schema(schema_dict)
+
+		elif not schema_path is None:
+			raise NotImplementedError
+
+
+
+
+	################################################################################
+	####################[ Saving	]###############################################
+	################################################################################
+
+	def load(self, path):
+		"""
+			loads schema_dict from provided path
+		"""
+		self.schema_dict = self.parse_schema(pickle.load(open(path)))
+
+
+	def save(self, path):
+		"""
+			saves this to path 
+		"""
+		pickle.dump(self.schema_dict, open(path, 'w'))
+
 
 
 
@@ -171,6 +198,9 @@ class ModalSchema(object):
 			raise NotImplementedError
 
 		return item_dict
+
+
+
 
 
 	################################################################################
