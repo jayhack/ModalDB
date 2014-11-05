@@ -87,7 +87,7 @@ class ModalDBSchema(object):
 		#=====[ Step 2: Check individual data objects	]=====
 		for obj_name, obj_dict in [(k,v) for k,v in schema_dict.items() if not k == 'Nesting']:
 			try:
-				self.parse_data_object(obj_dict)
+				schema_dict[obj_name] = self.parse_data_object(obj_dict)
 			except TypeError as T:
 				print "Error in schema for DataObject: %s" % str(obj_name)
 				raise T
@@ -98,6 +98,7 @@ class ModalDBSchema(object):
 	def parse_data_object(self, obj_dict):
 		"""
 			enforces constraints on obj_dicts
+			returns them properly formatted
 		"""
 		#=====[ Step 1: Check types of top-level keys 	]=====
 		if not all([type(k)==str and type(v)==dict for k,v in obj_dict.items()]):
@@ -106,15 +107,18 @@ class ModalDBSchema(object):
 		#=====[ Step 2: Check individual item dicts	]=====
 		for item_name, item_dict in obj_dict.items():
 			try:
-				self.parse_item(item_name, item_dict)
+				obj_dict[item_name] = self.parse_item(item_name, item_dict)
 			except TypeError as T:
 				print "Error in schema for item: %s" % item_name
 				raise T
+
+		return obj_dict
 
 
 	def parse_item(self, item_name, item_dict):
 		"""
 			enforces constraints on item_dicts
+			returns them formatted
 		"""
 		#=====[ Step 1: Deal with 'mode'	]=====
 		if 'mode' in item_dict:
@@ -161,8 +165,18 @@ class ModalDBSchema(object):
 		if item_dict['mode'] == 'dynamic':
 			raise NotImplementedError
 
+		return item_dict
 
 
+	################################################################################
+	####################[ Adding Items	]###########################################
+	################################################################################
 
+	def add_item(self, data_object, item_name, item_dict):
+		"""
+			adds an item to specified data_object 
+		"""
+		item_dict = self.parse_item(item_name, item_dict)
+		
 
 

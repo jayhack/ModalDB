@@ -62,6 +62,11 @@ class Test_ModalDBSchema(unittest.TestCase):
 
 		schema = ModalDBSchema(deepcopy(self.schema_ex))
 		self.assertTrue(type(schema.schema_dict) == dict)
+		self.assertTrue('filename' in schema.schema_dict[Frame]['image']) 
+		self.assertTrue('filename' in schema.schema_dict[Frame]['skeleton']) 
+		self.assertTrue(schema.schema_dict[Frame]['image']['filename'] == 'image')
+		self.assertTrue(not 'filename' in schema.schema_dict[Video]['subtitles'])
+
 
 	@raises(TypeError)
 	def test_creation_2(self):
