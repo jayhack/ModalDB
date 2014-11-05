@@ -128,6 +128,13 @@ class ModalSchema(object):
 		if not all([issubclass(key, DataObject) for key in [k for k in schema_dict.keys() if not k == 'Nesting']]):
 			raise TypeError("Top-level keys in schema must be subclasses of DataObject or 'Nesting'!")
 
+		
+		#=====[ Step 2: Verify Nesting	]=====
+		if not type(schema_dict['Nesting']) == list:
+			raise TypeError("Nesting must be a list of DataObject subclasses")
+		if not all([issubclass(key, DataObject) for key in schema_dict['Nesting']]):
+			raise TypeError("Nesting must be a list of DataObject subclasses")
+
 
 		#=====[ Step 2: Check individual data objects	]=====
 		for obj_name, obj_dict in [(k,v) for k,v in schema_dict.items() if not k == 'Nesting']:

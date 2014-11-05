@@ -69,6 +69,7 @@ class ModalClient(object):
 
 
 
+
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
@@ -112,15 +113,13 @@ class ModalClient(object):
 				client.drop_database(db_name)
 
 
-
-
 	def fill_mongo_index(self):
 		"""
 			goes through entire data dir and fills in data 
 			directory
 			(assumes no videos are there)
 		"""
-
+		raise NotImplementedError 
 
 
 
@@ -128,12 +127,48 @@ class ModalClient(object):
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
 
-	def insert_object(self, name, data_type, ):
+	def get_parent_type(self, datatype):
 		"""
-			data_type: Type of inserted object 
-			root: path to directory containing this one 
+			returns the parent type, according to self.schema 
+			NOTE: currently assumes that 'Nesting' is a list, where each 
+					element is a type.
+		"""
+		index = self.schema['Nesting'].index(datatype)
+		if index == 0:
+			return None 
+		else:
+			return self.schema['Nesting'][index - 1]
 
 
+
+	def create_mongo_doc(self, _id, root, data_type):
+		"""
+			creates a mongodb document representing a given data type 
+		"""
+		schema = self.schema[data_type]
+		mongo_doc = {}
+
+		#=====[ Step 1: fill in root	]=====
+		mongo_doc['root'] = root
+
+		#=====[ Step 2: fill in name	]=====
+		mongo_doc['_id'] = _id
+
+		#=====[ Step 3: fill mongo_doc['items'] ]=====
+		mongo_doc['items'] = deepcopy(schema)
+		for k,v in mongo_doc['items']:
+			v['exists'] = False
+
+		return mongo_doc
+
+
+
+
+	def insert_object(self, _id, parent_name, data_type, method='cp'):
+		"""
+			name: name of this object (becomes _id)
+			parent_name: name of containing object (optionally none for top-level ones)
+			data_type: subclass of DataObject
 
 			method: cp or mv 
 					- cp: copies the file 
@@ -145,9 +180,17 @@ class ModalClient(object):
 			raise Exception("Inserted object must be a subclass of DataObject")
 		if not type(data_object) in self.schema.keys():
 			raise Exception("Inserted object not described in current schema")
+		if not method in ['cp', 'mv']:
+			raise Exception("Only supported insertion modes are 'cp' and 'mv'")
 
-		#=====[ Step 2: figure out where it goes in the nesting 	]=====
-		raise NotImplementedError
+		#=====[ Step 2: find parent	]=====
+		parent_type = self.get_parent_type(data_type)
+
+
+		#=====[ Step 3: create corresponding mongo_doc 	]=====
+		mongo_doc = self.create_mongo_doc(_id, root, data_type)
+
+
 
 
 	####################################################################################################

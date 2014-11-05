@@ -93,10 +93,10 @@ class DataObject(object):
 		"""
 			this data object's name
 		"""
-	    return self.mongo_doc['_id']
+		return self.mongo_doc['_id']
 	@id.setter
 	def id(self, value):
-	    self.mongo_doc['_id'] = value
+		self.mongo_doc['_id'] = value
 	
 
 	def __contains__(self, name):

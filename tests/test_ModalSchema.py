@@ -35,7 +35,7 @@ class Test_ModalSchema(unittest.TestCase):
 			creates basic schema 
 		"""
 		self.schema_ex = {
-							'Nesting':{Video:{Frame}},
+							'Nesting':[Video, Frame],
 
 							Frame: {
 										'image':{
@@ -138,6 +138,30 @@ class Test_ModalSchema(unittest.TestCase):
 		ModalSchema(schema)
 
 
+	@raises(TypeError)
+	def test_creation_6(self):
+		"""
+			SAVE_FUNC WITH INCORRECT SCHEMA 
+			-------------------------------
+			should raise a TypeError due to 'Nesting' being improperly
+			formatted
+		"""
+		schema = deepcopy(self.schema_ex)
+		schema['Nesting'] = {Video:Frame}
+		ModalSchema(schema)
+
+
+	@raises(TypeError)
+	def test_creation_7(self):
+		"""
+			SAVE_FUNC WITH INCORRECT SCHEMA 
+			-------------------------------
+			should raise a TypeError due to 'Nesting' being improperly
+			formatted
+		"""
+		schema = deepcopy(self.schema_ex)
+		schema['Nesting'] = ['Video', 'Frame']
+		ModalSchema(schema)
 
 
 
