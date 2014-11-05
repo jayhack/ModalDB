@@ -69,24 +69,6 @@ class ModalClient(object):
 
 
 
-
-
-	####################################################################################################
-	######################[ --- DATABASE MANIPULATION --- ]#############################################
-	####################################################################################################
-
-	def reset_db(self):
-		"""
-			erases all info that already exists in the db 
-		"""
-		for db_name in self.mongo_client.database_names():
-			if not db_name in ['admin', 'local']:
-				client.drop_database(db_name)
-
-
-
-
-
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
@@ -109,7 +91,35 @@ class ModalClient(object):
 		"""
 			Displays the current schema 
 		"""
-		raise NotImplementedError
+		pprint(self.schema.schema_dict)
+
+
+
+
+
+
+
+	####################################################################################################
+	######################[ --- DATABASE MANIPULATION --- ]#############################################
+	####################################################################################################
+
+	def reset_db(self):
+		"""
+			erases all info that already exists in the db 
+		"""
+		for db_name in self.mongo_client.database_names():
+			if not db_name in ['admin', 'local']:
+				client.drop_database(db_name)
+
+
+	def fill_mongo_index(self):
+		"""
+			goes through entire data dir and fills in data 
+			directory
+			(assumes no videos are there)
+		"""
+
+
 
 
 
@@ -117,9 +127,14 @@ class ModalClient(object):
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
 
-	def insert_object(self, data_object):
+	def insert_object(self, data_object, method='cp'):
 		"""
-			puts the given data_object into the db 
+			puts the given data_object into the db
+
+			method: cp or mv 
+					- cp: copies the file 
+					- mv: moves the file
+
 		"""
 		#=====[ Step 1: sanitize input	]=====
 		if not issubclass(data_object, DataObject):

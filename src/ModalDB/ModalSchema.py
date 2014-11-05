@@ -17,6 +17,7 @@ jhack@stanford.edu
 '''
 import inspect
 import dill as pickle
+from pprint import pformat
 
 from DataObject import *
 
@@ -235,8 +236,6 @@ class ModalSchema(object):
 		"""
 		item_dict = self.parse_item(item_name, item_dict)
 		self.schema_dict[data_object][item_name] = item_dict
-
-
 
 
 
