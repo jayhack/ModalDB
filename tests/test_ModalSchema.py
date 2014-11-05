@@ -15,6 +15,7 @@ Fall 2014
 jhack@stanford.edu
 ##################
 '''
+import os
 import unittest 
 import nose
 from copy import copy, deepcopy
@@ -177,13 +178,14 @@ class Test_ModalSchema(unittest.TestCase):
 			------------------
 			save then reload the schema 
 		"""
-		ModalSchema(deepcopy(self.schema_ex)).save('./schema_temp.pkl')
-		schema = ModalSchema('./schema_temp.pkl')
+		ModalSchema(deepcopy(self.schema_ex)).save('./tests/schema_temp.pkl')
+		schema = ModalSchema('./tests/schema_temp.pkl')
 		self.assertTrue(type(schema.schema_dict) == dict)
 		self.assertTrue('filename' in schema.schema_dict[Frame]['image']) 
 		self.assertTrue('filename' in schema.schema_dict[Frame]['skeleton']) 
 		self.assertTrue(schema.schema_dict[Frame]['image']['filename'] == 'image')
 		self.assertTrue(not 'filename' in schema.schema_dict[Video]['subtitles'])
+		os.remove('./tests/schema_temp.pkl')
 
 
 
