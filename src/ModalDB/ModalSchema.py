@@ -1,6 +1,6 @@
 '''
-Class: ModalDBSchema
-====================
+Class: ModalSchema
+==================
 
 Description:
 ------------
@@ -18,10 +18,10 @@ jhack@stanford.edu
 import inspect
 from DataObject import *
 
-class ModalDBSchema(object):
+class ModalSchema(object):
 	"""
-		Class: ModalDBSchema
-		====================
+		Class: ModalSchema
+		==================
 
 		Contains functionality for dealing with and interpreting ModalDB 
 		schemas.
@@ -30,7 +30,7 @@ class ModalDBSchema(object):
 		Example Usage:
 		--------------
 
-		ModalDBSchema({
+		ModalSchema({
 							'Nesting':{Video:{Frame}},
 
 							#THIS IS A DATA OBJECT

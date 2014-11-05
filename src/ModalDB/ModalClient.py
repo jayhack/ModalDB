@@ -53,22 +53,27 @@ class ModalClient(object):
 		self.root = os.path.join(os.environ['DATA_DIR'], 'videos')
 
 
+
+	####################################################################################################
+	######################[ --- DATABASE MANIPULATION --- ]#############################################
+	####################################################################################################
+
+	def reset_db(self):
+		"""
+			erases all info that already exists in the db 
+		"""
+		for db_name in self.mongo_client.database_names():
+			if not db_name in ['admin', 'local']:
+				client.drop_database(db_name)
+
+
+	
+
+
+
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
-
-	@property
-	def schema(self):
-		"""
-			Describes the organization of data and the possibilities
-			for interacting with it.
-		"""
-		return self.db.schema
-
-	@schema.setter
-	def schema(self, value):
-		self.db.schema = value
-
 
 	def print_schema(self):
 		"""

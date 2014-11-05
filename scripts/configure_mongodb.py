@@ -47,15 +47,13 @@ from pymongo import MongoClient
 @click.option('--schema_file', help='import location of python dict containing schema. Ex: myproject.schema')
 def configure_mongodb(dbpath, schema_file):
 	"""
-		Configures/initializes the mongob database
+		Configures/initializes the mongodb database
 	"""
+	client = ModalClient()
+
 	#=====[ Step 1: Erase old tables	]=====
 	click.echo("---> Resetting MongoDB")
-	client = MongoClient()
-	for db_name in client.database_names():
-		if not db_name in ['admin', 'local']:
-			client.drop_database(db_name)
-	db = client.ModalDB
+	client.reset_db()
 
 
 	#=====[ Step 2: Set schema	]=====

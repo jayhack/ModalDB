@@ -1,5 +1,5 @@
 '''
-Test: ModalDBSchema
+Test: ModalSchema
 ===================
 
 Description:
@@ -23,7 +23,7 @@ from scipy.io import loadmat, savemat
 from scipy.misc import imsave, imread
 from ModalDB import *
 
-class Test_ModalDBSchema(unittest.TestCase):
+class Test_ModalSchema(unittest.TestCase):
 
 	################################################################################
 	####################[ setUp	]###################################################
@@ -69,10 +69,10 @@ class Test_ModalDBSchema(unittest.TestCase):
 		"""
 			BASIC CREATION TEST
 			-------------------
-			merely constructs a ModalDBSchema
+			merely constructs a ModalSchema
 		"""
 
-		schema = ModalDBSchema(deepcopy(self.schema_ex))
+		schema = ModalSchema(deepcopy(self.schema_ex))
 		self.assertTrue(type(schema.schema_dict) == dict)
 		self.assertTrue('filename' in schema.schema_dict[Frame]['image']) 
 		self.assertTrue('filename' in schema.schema_dict[Frame]['skeleton']) 
@@ -93,7 +93,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 		schema['Video'] = schema[Video]
 		del schema[Frame]
 		del schema[Video]
-		ModalDBSchema(schema)
+		ModalSchema(schema)
 
 
 	@raises(TypeError)
@@ -107,7 +107,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 		schema = deepcopy(self.schema_ex)
 		del schema[Frame]['image']['load_func']
 		del schema[Frame]['skeleton']['load_func']		
-		ModalDBSchema(schema)
+		ModalSchema(schema)
 
 
 	@raises(TypeError)
@@ -121,7 +121,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 		schema = deepcopy(self.schema_ex)
 		schema[Frame]['image']['load_func'] = lambda x, p: imread(p)
 		schema[Frame]['skeleton']['load_func'] = lambda x, p: loadmat(p)
-		ModalDBSchema(schema)
+		ModalSchema(schema)
 
 
 	@raises(TypeError)
@@ -134,7 +134,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 		"""
 		schema = deepcopy(self.schema_ex)
 		schema[Frame]['image']['save_func'] = lambda p: imsave(p)
-		ModalDBSchema(schema)
+		ModalSchema(schema)
 
 
 
@@ -152,7 +152,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 			-----------------
 			should perfectly add an item to the frame 
 		"""
-		schema = ModalDBSchema(deepcopy(self.schema_ex))
+		schema = ModalSchema(deepcopy(self.schema_ex))
 		item_dict = {
 						'mode':'disk',
 						'filename':'depth_image.mat',
