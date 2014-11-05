@@ -30,24 +30,29 @@ class ModalDBSchema(object):
 		Example Usage:
 		--------------
 
-			schema = ModalDBSchema({
+		ModalDBSchema({
+							'Nesting':{Video:{Frame}},
 
-				#THIS IS A DATA OBJECT
-				ModalDB.Frame:	{
-									#THIS IS AN ITEM
-									'image':{	
-												'in_memory':False,
-												'load_func':lambda p: sp.misc.imread(p),
-												'save_func':lambda x,p: sp.misc.imsave(x,p)
-											},
-									'skeleton':{
-												'in_memory':False,
-												'load_func':lambda x: cPickle.load(p)
-												'save_func':lambda x: cPickle.dump(x,p)												
-											
-											}
-								}
-			})
+							#THIS IS A DATA OBJECT
+							Frame: {
+										#THIS IS AN ITEM
+										'image':{
+													'mode':'disk',
+													'load_func':lambda p: imread(p),
+													'save_func':lambda x, p: imsave(x, p)
+												},	
+										'skeleton':{
+													'mode':'disk',
+													'load_func':lambda p: loadmat(p)
+												}
+									},
+
+							Video: {
+										'subtitles':{
+													'mode':'memory'
+													}
+									}
+						})
 
 	"""
 
@@ -171,6 +176,13 @@ class ModalDBSchema(object):
 	################################################################################
 	####################[ Adding Items	]###########################################
 	################################################################################
+
+	def add_data_object(self, object_type, object_dict):
+		"""
+			adds an item to specified data_object 
+		"""
+		object_dict = self.parse_data_object(object_dict)
+		self.schema_dict[object_type] = object_dict
 
 
 	def add_item(self, data_object, item_name, item_dict):

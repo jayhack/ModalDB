@@ -52,8 +52,8 @@ class Test_ModalDBSchema(unittest.TestCase):
 
 										'subtitles':{
 													'mode':'memory'
-										}
-							}
+													}
+									}
 						}
 
 
@@ -165,4 +165,12 @@ class Test_ModalDBSchema(unittest.TestCase):
 		self.assertTrue(schema.schema_dict[Frame]['depth_image']['filename'] == 'depth_image.mat')
 
 
+
+
+
+	################################################################################
+	####################[ Display	]###############################################
+	################################################################################
+
+	
 
