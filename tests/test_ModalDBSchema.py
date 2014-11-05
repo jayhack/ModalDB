@@ -93,7 +93,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 
 
 	@raises(TypeError)
-	def creation_test_4(self):
+	def test_creation_4(self):
 		"""
 			LOAD_FUNC WITH INCORRECT # OF ARGS 
 			----------------------------------
@@ -103,4 +103,17 @@ class Test_ModalDBSchema(unittest.TestCase):
 		schema = deepcopy(self.schema_ex)
 		schema[Frame]['image']['load_func'] = lambda x, p: imread(p)
 		schema[Frame]['skeleton']['load_func'] = lambda x, p: loadmat(p)
+		ModalDBSchema(schema)
+
+
+	@raises(TypeError)
+	def test_creation_5(self):
+		"""
+			SAVE_FUNC WITH INCORRECT # OF ARGS 
+			----------------------------------
+			should raise a TypeError due to load_funcs with improper 
+			# of arguments
+		"""
+		schema = deepcopy(self.schema_ex)
+		schema[Frame]['image']['save_func'] = lambda p: imsave(p)
 		ModalDBSchema(schema)
