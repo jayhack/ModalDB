@@ -15,7 +15,7 @@ Description:
 
 	Terminology:
 		- item: key, value pair
-		- mongo_dict: representation that appears in mongodb, containing 
+		- mongo_doc: representation that appears in mongodb, containing 
 					fast-access items 
 		- root: path to directory containing slow-access items
 
@@ -34,7 +34,6 @@ jhack@stanford.edu
 ##################
 '''
 import os
-from collections import defaultdict
 
 class DataObject(object):
 	"""
@@ -46,17 +45,21 @@ class DataObject(object):
 
 	"""
 
-	def __init__(self, db, mongo_dict, root):
+	def __init__(self, mongo_doc):
 		"""
-			schema: dict describing layout and modes of interaction with contents
-			mongo_dict: dict containing data from mongodb (for fast read/write in memory)
-			root: root directory containing data on disk (for slower read/write of larger sizes)
+			mongo_doc: contains root, schema, etc.
+
+			{
+				'root':'/path/to/dataobject',
+				'items':{
+							...items...
+						}
+				'_id':'this_id'
+				}
+
 		"""
-		self.db = db
-		self.schema = db.schema[type(self)]
-		self.mongo_dict = mongo_dict
-		self.disk_dict = {k:None for k in self.schema.keys() if not self.schema[k]['in_memory']}
-		self.root = root
+		self.mongo_doc = mongo_doc
+		self.disk_dict = self.get_disk_dict()
 
 
 	################################################################################
@@ -64,27 +67,78 @@ class DataObject(object):
 	################################################################################
 
 	@property
-	def schema(self):
-	    return self._schema
-	@schema.setter
-	def schema(self, value):
-	    self._schema = value
+	def items(self):
+		"""
+			dict mapping item name to it description and, possibly, contents 
+		"""
+		return self.mongo_doc['items']
+	@items.setter
+	def items(self, value):
+		self.mongo_doc['items'] = value
 
 
 	@property
 	def root(self):
-	    return self._root
+		"""
+			path to this data object's root in filesystem
+		"""
+		return self.mongo_doc['root']
 	@root.setter
 	def root(self, value):
-	    self._root = value
+		self.mongo_doc['root'] = value
 
 
-	def keys(self):
-	    return self.schema.keys()
-
+	@property
+	def id(self):
+		"""
+			this data object's name
+		"""
+	    return self.mongo_doc['_id']
+	@id.setter
+	def id(self, value):
+	    self.mongo_doc['_id'] = value
+	
 
 	def __contains__(self, name):
-		return name in self.keys
+		"""
+			allows for easy lookup of wether data object has this 
+		"""
+		return name in self.items
+
+
+	################################################################################
+	####################[ Disk items	]###########################################
+	################################################################################
+
+	def get_disk_dict(self, mongo_doc):
+		"""
+			given a mongo_doc, returns a dict mapping disk-items to None
+		"""
+		return {k:None for k,v in self.items if v['mode'] == 'disk'}
+
+
+	def get_path(self, key):
+		"""
+			returns path to file storing item named by key 
+		"""
+		return os.path.join(self.root, self.items[key]['filename'])
+
+
+	def load_disk_item(self, key):
+		"""
+			Loads item named by key
+		"""
+		self.disk_dict[key] = self.items[key]['load_func'](self.get_path(key))
+
+
+	def save_disk_item(self, key):
+		"""
+			Saves item named by key
+		"""
+		assert not self.disk_dict[key] is None
+		assert not self.items[key]['save_func'] is None
+		self.items[key]['save_func'](self.disk_dict[key], self.get_path(key))
+
 
 
 
@@ -92,76 +146,38 @@ class DataObject(object):
 	####################[ Accessing Contents	]###################################
 	################################################################################
 
-	def get_path(self, key):
-		"""
-			returns path to file storing item named by key 
-		"""
-		return os.path.join(self.root, self.schema[key]['filename'])
-
-
-	def load_disk_item(self, key):
-		"""
-			Loads item named by key
-		"""
-		self.disk_dict[key] = self.schema[key]['load_func'](self.get_path(key))
-
-
-	def save_disk_item(self, key):
-		"""
-			Saves item named by key
-		"""
-		self.schema[name]['save_func'](self.get_path(key))
-
-
 	def __getitem__(self, key):
 
 		#=====[ Case: nonexistant item	]=====
-		if not key in self.schema:
+		if not key in self:
 			raise AttributeError('No such item: %s' % key)
 
-		#=====[ Case: in-memory item ]=====
-		elif self.schema[key]['in_memory']:
-			return self.mongo_dict[key]
-
 		#=====[ Case: on-disk item	]=====
-		else:
+		elif self.items[key][mode] == 'disk':
 			if self.disk_dict[key] is None:
 				self.load_disk_item(key)
 			return self.disk_dict[key]
+
+		#=====[ Case: in-memory item ]=====
+		elif self.items[key][mode] == 'memory':
+			#####[ TODO: get items from memory	]#####
+			raise NotImplementedError
 
 
 	def __setitem__(self, key, value):
 		
 		#=====[ Case: nonexistant item	]=====
-		if not key in self.schema:
+		if not key in self:
 			raise AttributeError('No such item: %s' % key)
 
 		#=====[ Case: in-memory item	]=====
-		elif self.schema[key]['in_memory']:
-			self.mongo_dict[key] = value
+		elif self.items[key][mode] == 'memory':
+			#####[ TODO: set items in memory	]#####
+			raise NotImplementedError
 
 		#=====[ Case: on-disk item	]=====
 		else:
 			self.disk_dict[key] = value
 			self.save_disk_item(key)
-
-
-	def item_exists(self, key):
-		"""
-			returns true if the item named by key exists,
-			wether thats in mongodb or on disk 
-		"""
-		#=====[ Case: nonexistant item	]=====
-		if not key in self.schema:
-			raise AttributeError('No such item: %s' % key)
-
-		#=====[ Case: in-memory item	]=====
-		elif self.schema[key]['in_memory']:
-			return key in self.mongo_dict
-
-		#=====[ Case: on-disk item	]=====
-		else:
-			return os.path.exists(self.get_path(key))
-
 
 
