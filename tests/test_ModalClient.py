@@ -63,7 +63,6 @@ class Test_ModalSchema(unittest.TestCase):
 
 		#=====[ Save it for tests	]=====
 		self.data_dir = 'tests/data'
-		os.mkdir(self.data_dir)
 		os.environ['DATA_DIR'] = self.data_dir
 		self.schema_path = os.path.join(self.data_dir, '.ModalDB_schema.pkl')
 		pickle.dump(self.schema, open(self.schema_path, 'w'))
@@ -75,7 +74,6 @@ class Test_ModalSchema(unittest.TestCase):
 			resets everything from setUp 
 		"""
 		os.environ['DATA_DIR'] = self.old_data_dir
-		os.rmdir(self.data_dir)
 
 
 
@@ -86,16 +84,8 @@ class Test_ModalSchema(unittest.TestCase):
 	####################[ Creation	]###############################################
 	################################################################################
 
+
 	def test_creation_1(self):
-		"""
-			BASIC CREATION LOADING SCHEMA
-			-----------------------------
-			merely constructs a ModalClient, loading the schema
-		"""
-		client = ModalClient()
-
-
-	def test_creation_2(self):
 		"""
 			BASIC CREATION PASSING IN SCHEMA
 			--------------------------------

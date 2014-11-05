@@ -63,7 +63,7 @@ class ModalSchema(object):
 	data_modes = ['memory', 'disk', 'dynamic']
 
 
-	def __init__(self, schema_path_or_dict):
+	def __init__(self, schema_path_or_dict=None):
 		"""
 			parses and validates either schema_dict or schema_path
 		"""

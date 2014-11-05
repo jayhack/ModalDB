@@ -14,6 +14,7 @@ Fall 2014
 jhack@stanford.edu
 ##############
 '''
+import os
 import random
 from itertools import islice
 from pprint import pformat, pprint
@@ -47,7 +48,8 @@ class ModalClient(object):
 			Connect to MongoDB, load schema, find root path
 		"""
 		#=====[ Step 1: Grab root from envvars	]=====
-		self.root = os.path.join(os.environ['DATA_DIR'], 'videos')
+		self.root = os.environ['DATA_DIR']
+		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
 
 		#=====[ Step 2: Connect to MongoDB	]=====
 		try:
@@ -66,12 +68,6 @@ class ModalClient(object):
 				raise Exception("You need to specify a schema! See ModalSchema")
 
 
-
-	def __del__(self):
-		"""
-			Save schema 
-		"""
-		self.save_schema()
 
 
 
@@ -93,29 +89,19 @@ class ModalClient(object):
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
-
-	@property
-	def schema(self):
-		return self._schema
-	@schema.setter
-	def schema(self, value):
-		assert type(new_schema) == ModalSchema
-		self._schema = value
 	
-
 	def load_schema(self):
 		"""
 			loads the schema from $DATA_DIR/.ModalDB_schema.pkl
 		"""
-		return pickle.load(open(os.path.join(self.root, '.ModalDB_schema.pkl')))
+		return ModalSchema(self.schema_path)
 
 
 	def save_schema(self):
 		"""
 			saves the schema to $DATA_DIR/.ModalDB_schema.pkl
 		"""
-		self.schema.save(os.path.join(self.root, '.ModalDB_schema.pkl'))
-
+		self.schema.save(self.schema_path)
 
 	def print_schema(self):
 		"""
