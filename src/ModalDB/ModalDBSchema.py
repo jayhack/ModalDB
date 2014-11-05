@@ -88,8 +88,9 @@ class ModalDBSchema(object):
 		for obj_name, obj_dict in [(k,v) for k,v in schema_dict.items() if not k == 'Nesting']:
 			try:
 				self.parse_data_object(obj_dict)
-			except TypeError:
+			except TypeError as T:
 				print "Error in schema for DataObject: %s" % str(obj_name)
+				raise T
 
 
 	def parse_data_object(self, obj_dict):
@@ -104,9 +105,9 @@ class ModalDBSchema(object):
 		for item_name, item_dict in obj_dict.items():
 			try:
 				self.parse_item(item_name, item_dict)
-			except TypeError:
-				print "Error in schema for item %s" % item_name
-				raise TypeError
+			except TypeError as T:
+				print "Error in schema for item: %s" % item_name
+				raise T
 
 
 

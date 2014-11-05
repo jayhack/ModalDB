@@ -24,9 +24,11 @@ from ModalDB import *
 
 class Test_ModalDBSchema(unittest.TestCase):
 
-	def creation_test_1(self):
+	def test_creation_1(self):
 		"""
-			just creation of basic schema 
+			BASIC CREATION TEST
+			-------------------
+			merely constructs a ModalDBSchema
 		"""
 		ModalDBSchema({
 						'Nesting':{Video:{Frame}},
@@ -34,11 +36,11 @@ class Test_ModalDBSchema(unittest.TestCase):
 						Frame: {
 									'image':{
 												'mode':'disk',
-												'load_func':imread
+												'load_func':lambda p: imread(p)
 											},	
 									'skeleton':{
 												'mode':'disk',
-												'load_func':loadmat
+												'load_func':lambda p: loadmat(p)
 									}
 								},
 
@@ -52,9 +54,12 @@ class Test_ModalDBSchema(unittest.TestCase):
 
 
 	@raises(TypeError)
-	def creation_test_2(self):
+	def test_creation_2(self):
 		"""
-			creation of schema with wrong top-level keys 
+			NEGATIVE TEST
+			-------------
+			should raise a TypeError due to top-level keys being 
+			strings
 		"""
 		ModalDBSchema({
 						'Nesting':{Video:{Frame}},
@@ -62,15 +67,44 @@ class Test_ModalDBSchema(unittest.TestCase):
 						'Frame': {
 									'image':{
 												'mode':'disk',
-												'load_func':imread
+												'load_func':lambda p: imread(x),
 											},	
 									'skeleton':{
 												'mode':'disk',
-												'load_func':loadmat
+												'load_func':lambda p: loadmat(p),
 									}
 								},
 
 						'Video': {
+
+									'subtitles':{
+												'mode':'memory'
+									}
+						}
+					})
+
+
+	@raises(TypeError)
+	def creation_test_3(self):
+		"""
+			NEGATIVE TEST
+			-------------
+			should raise a TypeError due to disk-items not specifying 
+			load functions
+		"""
+		ModalDBSchema({
+						'Nesting':{Video:{Frame}},
+						
+						Frame: {
+									'image':{
+												'mode':'disk',
+											},	
+									'skeleton':{
+												'mode':'disk',
+									}
+								},
+
+						Video: {
 
 									'subtitles':{
 												'mode':'memory'
