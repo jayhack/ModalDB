@@ -103,13 +103,15 @@ class ModalClient(object):
 	######################[ --- DATABASE MANIPULATION --- ]#############################################
 	####################################################################################################
 
-	def reset_db(self):
+	def clear_db(self):
 		"""
 			erases all info that already exists in the db 
 		"""
 		for db_name in self.mongo_client.database_names():
 			if not db_name in ['admin', 'local']:
 				client.drop_database(db_name)
+
+
 
 
 	def fill_mongo_index(self):
@@ -122,14 +124,16 @@ class ModalClient(object):
 
 
 
-
 	####################################################################################################
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
 
-	def insert_object(self, data_object, method='cp'):
+	def insert_object(self, name, data_type, ):
 		"""
-			puts the given data_object into the db
+			data_type: Type of inserted object 
+			root: path to directory containing this one 
+
+
 
 			method: cp or mv 
 					- cp: copies the file 

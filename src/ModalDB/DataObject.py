@@ -50,7 +50,7 @@ class DataObject(object):
 		"""
 			schema: dict describing layout and modes of interaction with contents
 			mongo_dict: dict containing data from mongodb (for fast read/write in memory)
-			root: root directory containign data on disk (for slower read/write of larger sizes)
+			root: root directory containing data on disk (for slower read/write of larger sizes)
 		"""
 		self.db = db
 		self.schema = db.schema[type(self)]
