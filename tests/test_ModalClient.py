@@ -17,7 +17,7 @@ jhack@stanford.edu
 ##################
 '''
 import os
-import pickle
+import dill as pickle
 import unittest 
 from copy import copy, deepcopy
 import nose

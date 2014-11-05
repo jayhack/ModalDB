@@ -16,6 +16,8 @@ jhack@stanford.edu
 ##################
 '''
 import inspect
+import dill as pickle
+
 from DataObject import *
 
 class ModalSchema(object):
@@ -31,28 +33,29 @@ class ModalSchema(object):
 		--------------
 
 		ModalSchema({
-							'Nesting':{Video:{Frame}},
+						#THIS DEFINES HOW DATA OBJECTS NEST
+						'Nesting':{Video:{Frame}},
 
-							#THIS IS A DATA OBJECT
-							Frame: {
-										#THIS IS AN ITEM
-										'image':{
-													'mode':'disk',
-													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p: imsave(x, p)
-												},	
-										'skeleton':{
-													'mode':'disk',
-													'load_func':lambda p: loadmat(p)
+						#THIS IS A DATA OBJECT
+						Frame: {
+									#THIS IS AN ITEM
+									'image':{
+												'mode':'disk',
+												'load_func':lambda p: imread(p),
+												'save_func':lambda x, p: imsave(x, p)
+											},	
+									'skeleton':{
+												'mode':'disk',
+												'load_func':lambda p: loadmat(p)
+											}
+								},
+
+						Video: {
+									'subtitles':{
+												'mode':'memory'
 												}
-									},
-
-							Video: {
-										'subtitles':{
-													'mode':'memory'
-													}
-									}
-						})
+								}
+					})
 
 	"""
 
@@ -60,18 +63,18 @@ class ModalSchema(object):
 	data_modes = ['memory', 'disk', 'dynamic']
 
 
-	def __init__(self, schema_dict=None, schema_path=None):
+	def __init__(self, schema_path_or_dict):
 		"""
 			parses and validates either schema_dict or schema_path
 		"""
-		if not schema_dict is None and not schema_path is None:
-			raise Exception("specify *either* a schema dict or a path to load from ")
+		if type(schema_path_or_dict) == dict:
+			self.schema_dict = self.parse_schema(schema_path_or_dict)
 
-		if not schema_dict is None:
-			self.schema_dict = self.parse_schema(schema_dict)
+		elif type(schema_path_or_dict) == str:
+			self.load(schema_path_or_dict)
 
-		elif not schema_path is None:
-			raise NotImplementedError
+		else:
+			raise Exception("Schema must be initialized with a dict or a path")
 
 
 
@@ -166,18 +169,19 @@ class ModalSchema(object):
 			#=====[ load_func	]=====
 			if not 'load_func' in item_dict:
 				raise TypeError("All disk items require a load_func")
-			else:
+			elif not item_dict['load_func'] is None:
 				if not inspect.isfunction(item_dict['load_func']):
-					raise TypeError("load_func must be an acutal function")
+					raise TypeError("load_func must be an actual function")
 				if not len(inspect.getargspec(item_dict['load_func']).args) == 1:
 					raise TypeError("load_func must take only one argument (filepath)")
 
 			#=====[ save_func	]=====
 			if not 'save_func'in item_dict:
-				item_dict['load_func'] = None
-			else:
+				item_dict['save_func'] = None
+			elif not item_dict['save_func'] is None:
 				if not inspect.isfunction(item_dict['save_func']):
-					raise TypeError("save_func must be an acutal function")
+					raise TypeError("save_func must be an actual function")
+
 				if not len(inspect.getargspec(item_dict['save_func']).args) == 2:
 					raise TypeError("save_func must take 2 args (object and filepath)")
 
@@ -195,6 +199,7 @@ class ModalSchema(object):
 
 		#=====[ Step 4: deal with dynamic items	]=====
 		if item_dict['mode'] == 'dynamic':
+			#####[ TODO: parse dynamic	]#####
 			raise NotImplementedError
 
 		return item_dict

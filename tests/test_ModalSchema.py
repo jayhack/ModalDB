@@ -167,4 +167,23 @@ class Test_ModalSchema(unittest.TestCase):
 
 
 	
+	################################################################################
+	####################[ Load and Save	]###########################################
+	################################################################################
+
+	def test_load_save(self):
+		"""
+			LOADING AND SAVING 
+			------------------
+			save then reload the schema 
+		"""
+		ModalSchema(deepcopy(self.schema_ex)).save('./schema_temp.pkl')
+		schema = ModalSchema('./schema_temp.pkl')
+		self.assertTrue(type(schema.schema_dict) == dict)
+		self.assertTrue('filename' in schema.schema_dict[Frame]['image']) 
+		self.assertTrue('filename' in schema.schema_dict[Frame]['skeleton']) 
+		self.assertTrue(schema.schema_dict[Frame]['image']['filename'] == 'image')
+		self.assertTrue(not 'filename' in schema.schema_dict[Video]['subtitles'])
+
+
 
