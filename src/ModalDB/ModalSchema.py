@@ -96,10 +96,8 @@ class ModalSchema(object):
 		"""
 			loads schema_dict from provided path
 		"""
-		d = pickle.load(open(path))
-		print d
-
 		self.schema_dict = self.parse_schema(pickle.load(open(path)))
+
 
 	def save(self, path):
 		"""

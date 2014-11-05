@@ -94,6 +94,7 @@ class Test_ModalSchema(unittest.TestCase):
 		client = ModalClient(schema=self.schema)
 
 
+
 	def test_creation_1(self):
 		"""
 			BASIC CREATION LOADING DEFAULT SCHEMA
@@ -101,6 +102,12 @@ class Test_ModalSchema(unittest.TestCase):
 			merely constructs a ModalClient, loading the schema
 		"""
 		client = ModalClient(root='./tests/data')
+		schema = client.schema
+		self.assertTrue(type(schema.schema_dict) == dict)
+		self.assertTrue('filename' in schema.schema_dict[Frame]['image']) 
+		self.assertTrue('filename' in schema.schema_dict[Frame]['skeleton']) 
+		self.assertTrue(schema.schema_dict[Frame]['image']['filename'] == 'image')
+		self.assertTrue(not 'filename' in schema.schema_dict[Video]['subtitles'])
 	
 
 
