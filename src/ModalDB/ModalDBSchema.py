@@ -139,7 +139,7 @@ class ModalDBSchema(object):
 			if not 'save_func'in item_dict:
 				item_dict['load_func'] = None
 			else:
-				if not insepct.isfunction(item_dict['save_func']):
+				if not inspect.isfunction(item_dict['save_func']):
 					raise TypeError("save_func must be an acutal function")
 				if not len(inspect.getargspec(item_dict['save_func']).args) == 2:
 					raise TypeError("save_func must take 2 args (object and filepath)")
