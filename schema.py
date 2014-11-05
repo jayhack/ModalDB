@@ -24,46 +24,38 @@ from scipy.misc import imread, imsave
 from ModalDB import Video, Frame
 
 Schema = {
+
 	Frame: {
 
-		'_id': 		{
-						'in_memory':True,
-					},
-
 		'image':	{
-						'in_memory':False,
+						'mode':'disk',
 						'filename':'image.jpg',
 						'load_func':lambda p: imread(p),
 						'save_func':None
 					},
 
 		'masks':	{
-						'in_memory':False,
+						'mode':'disk',
 						'filename':'masks_and_scores.mat',
 						'load_func':lambda p: loadmat(p, variable_names=['masks'])['masks'],
 						'save_func':None
 					},
 
 		'scores':	{
-						'in_memory':False,
+						'mode':'disk',
 						'filename':'masks_and_scores.mat',
 						'load_func':lambda p: loadmat(p, variable_names=['scores'])['scores'],
 						'save_func':None
 					},
 
 		'cnn_features':	{
-						'in_memory':False,
+						'mode':'disk',
 						'filename':'features.npy',
 						'load_func':lambda p: cPickle.load(p),
 						'save_func':lambda x, p: cPickle.dump(x, open(p, 'w'))
 					}
 	},
 
-	Video: {
-
-		'_id': 	{
-						'in_memory':True
-		}
-	}
+	Video: {}
 
 }
