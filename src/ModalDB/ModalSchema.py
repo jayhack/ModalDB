@@ -77,6 +77,15 @@ class ModalSchema(object):
 			raise Exception("Schema must be initialized with a dict or a path")
 
 
+	################################################################################
+	####################[ INTERFACE	]###############################################
+	################################################################################
+
+	def is_supported_object(self, data_object):
+		"""
+			returns true if data_object is described in the schema 
+		"""
+		return type(data_object) in self.schema_dict.keys()
 
 
 	################################################################################

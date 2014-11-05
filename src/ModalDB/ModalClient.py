@@ -84,12 +84,6 @@ class ModalClient(object):
 				client.drop_database(db_name)
 
 
-	def init_db(self):
-		"""
-			checks status of loaded items 
-		"""
-		
-
 
 
 
@@ -118,6 +112,23 @@ class ModalClient(object):
 		raise NotImplementedError
 
 
+
+	####################################################################################################
+	######################[ --- INSERTING ELEMENTS --- ]################################################
+	####################################################################################################
+
+	def insert_object(self, data_object):
+		"""
+			puts the given data_object into the db 
+		"""
+		#=====[ Step 1: sanitize input	]=====
+		if not issubclass(data_object, DataObject):
+			raise Exception("Inserted object must be a subclass of DataObject")
+		if not type(data_object) in self.schema.keys():
+			raise Exception("Inserted object not described in current schema")
+
+		#=====[ Step 2: figure out where it goes in the nesting 	]=====
+		raise NotImplementedError
 
 
 	####################################################################################################
