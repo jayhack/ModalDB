@@ -45,7 +45,7 @@ class ModalClient(object):
 		#=====[ Step 1: Connect to MongoDB	]=====
 		try:
 			self.mongo_client = MongoClient()
-			self.db = self.mongo_client.Client
+			self.db = self.mongo_client.ModalDB
 		except:
 			raise Exception("Turn on MongoDB.")
 

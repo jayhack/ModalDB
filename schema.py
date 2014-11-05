@@ -5,7 +5,8 @@ Schema.py: define your database schema
 Description:
 ------------
 	
-	Describes how images are stored and accessed
+	Describes how different components are stored 
+	and accessed
 
 
 ##################
