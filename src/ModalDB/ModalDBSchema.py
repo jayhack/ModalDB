@@ -16,6 +16,7 @@ jhack@stanford.edu
 ##################
 '''
 import inspect
+from DataObject import *
 
 class ModalDBSchema(object):
 	"""
@@ -67,8 +68,7 @@ class ModalDBSchema(object):
 	####################[ Parsing and Validation	]###############################
 	################################################################################
 
-
-	def validate_format_schema(schema_dict):
+	def parse_schema(self, schema_dict):
 		"""
 			enforces constraints on schema_dict
 			Top-level keys need to be 'Nesting' and other DataObjects
@@ -78,39 +78,39 @@ class ModalDBSchema(object):
 			- schema_dict: dictionary containing schema
 		"""
 		#=====[ Step 1: Check types of top-level keys	]=====
-		if not all([issubclass(key, DataObject) or key == 'Nesting' for key in schema_dict.keys()]):
-			raise TypeError("Top-level keys in schema must be subclasses of DataObject or 'Nesting'!")
 		if not 'Nesting' in schema_dict.keys():
 			raise TypeError("You must specify the nesting of DataObjects with top-level key 'Nesting'!")
+		if not all([issubclass(key, DataObject) for key in [k for k in schema_dict.keys() if not k == 'Nesting']]):
+			raise TypeError("Top-level keys in schema must be subclasses of DataObject or 'Nesting'!")
 
 
 		#=====[ Step 2: Check individual data objects	]=====
-		for obj_name, obj_dict in [k,v for k,v in shema_dict.items() if not k == 'Nesting']:
+		for obj_name, obj_dict in [(k,v) for k,v in schema_dict.items() if not k == 'Nesting']:
 			try:
-				self.validate_format_data_object(obj_dict)
+				self.parse_data_object(obj_dict)
 			except TypeError:
 				print "Error in schema for DataObject: %s" % str(obj_name)
 
 
-	def validate_format_data_object(obj_dict):
+	def parse_data_object(self, obj_dict):
 		"""
 			enforces constraints on obj_dicts
 		"""
 		#=====[ Step 1: Check types of top-level keys 	]=====
-		if not all([type(k)==str and type(v)==dict for k,v in obj_dicts]):
+		if not all([type(k)==str and type(v)==dict for k,v in obj_dict.items()]):
 			raise Exception("Top-level keys in DataObject schemas must all be strings mapping to dicts!")
 
 		#=====[ Step 2: Check individual item dicts	]=====
-		for item_name, item_dict in obj_dict.values():
+		for item_name, item_dict in obj_dict.items():
 			try:
-				self.validate_format_item(item_name, item_dict)
+				self.parse_item(item_name, item_dict)
 			except TypeError:
 				print "Error in schema for item %s" % item_name
 				raise TypeError
 
 
 
-	def validate_format_item(item_name, item_dict):
+	def parse_item(self, item_name, item_dict):
 		"""
 			enforces constraints on item_dicts
 		"""
@@ -129,15 +129,19 @@ class ModalDBSchema(object):
 			if not 'load_func' in item_dict:
 				raise TypeError("All disk items require a load_func")
 			else:
-				if not insepct.isfunction(item_dict['load_func']):
+				if not inspect.isfunction(item_dict['load_func']):
 					raise TypeError("load_func must be an acutal function")
+				if not len(inspect.getargspec(item_dict['load_func']).args) == 1:
+					raise TypeError("load_func must take only one argument (filepath)")
 
 			#=====[ save_func	]=====
 			if not 'save_func'in item_dict:
 				item_dict['load_func'] = None
 			else:
-				if not insepct.isfunction(item_dict['load_func']):
-					raise TypeError("load_func must be an acutal function")
+				if not insepct.isfunction(item_dict['save_func']):
+					raise TypeError("save_func must be an acutal function")
+				if not len(inspect.getargspec(item_dict['save_func']).args) == 2:
+					raise TypeError("save_func must take 2 args (object and filepath)")
 
 			#=====[ filename default: item name	]=====
 			if not 'filename' in item_dict:
@@ -148,7 +152,8 @@ class ModalDBSchema(object):
 
 		#=====[ Step 3: deal with memory items	]=====
 		if item_dict['mode'] == 'memory':
-			raise NotImplementedError
+			#####[ TODO: parse memory ]#####
+			pass
 
 		#=====[ Step 4: deal with dynamic items	]=====
 		if item_dict['mode'] == 'dynamic':
