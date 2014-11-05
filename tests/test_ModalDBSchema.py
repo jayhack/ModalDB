@@ -61,6 +61,7 @@ class Test_ModalDBSchema(unittest.TestCase):
 		"""
 
 		schema = ModalDBSchema(deepcopy(self.schema_ex))
+		self.assertTrue(type(schema.schema_dict) == dict)
 
 	@raises(TypeError)
 	def test_creation_2(self):

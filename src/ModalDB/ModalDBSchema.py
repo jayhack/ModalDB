@@ -60,7 +60,7 @@ class ModalDBSchema(object):
 			parses and validates the schema_dict
 		"""
 		#=====[ Step 1: validate schema_dict	]=====
-		self.schema = self.parse_schema(schema_dict)
+		self.schema_dict = self.parse_schema(schema_dict)
 
 
 
@@ -92,6 +92,8 @@ class ModalDBSchema(object):
 				print "Error in schema for DataObject: %s" % str(obj_name)
 				raise T
 
+		return schema_dict
+
 
 	def parse_data_object(self, obj_dict):
 		"""
@@ -108,7 +110,6 @@ class ModalDBSchema(object):
 			except TypeError as T:
 				print "Error in schema for item: %s" % item_name
 				raise T
-
 
 
 	def parse_item(self, item_name, item_dict):
