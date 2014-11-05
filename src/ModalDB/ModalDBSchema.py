@@ -172,11 +172,15 @@ class ModalDBSchema(object):
 	####################[ Adding Items	]###########################################
 	################################################################################
 
+
 	def add_item(self, data_object, item_name, item_dict):
 		"""
 			adds an item to specified data_object 
 		"""
 		item_dict = self.parse_item(item_name, item_dict)
-		
+		self.schema_dict[data_object][item_name] = item_dict
+
+
+
 
 
