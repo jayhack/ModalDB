@@ -84,6 +84,13 @@ class ModalClient(object):
 				client.drop_database(db_name)
 
 
+	def init_db(self):
+		"""
+			checks status of loaded items 
+		"""
+		
+
+
 
 
 	####################################################################################################
@@ -103,6 +110,7 @@ class ModalClient(object):
 		"""
 		self.schema.save(self.schema_path)
 
+
 	def print_schema(self):
 		"""
 			Displays the current schema 
@@ -114,19 +122,7 @@ class ModalClient(object):
 
 	####################################################################################################
 	######################[ --- VIDEO ACCESS --- ]######################################################
-	####################################################################################################
-
-	@property
-	def videos(self):
-		"""
-			Access to the videos table
-		"""
-		return self.db.videos
-
-	@videos.setter
-	def videos(self, value):
-		self.db.videos = value
-	
+	####################################################################################################	
 
 	def get_video(self, video_name):
 		"""
