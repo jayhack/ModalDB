@@ -34,6 +34,7 @@ jhack@stanford.edu
 ##################
 '''
 import os
+from copy import deepcopy
 
 class DataObject(object):
 	"""
@@ -145,11 +146,11 @@ class DataObject(object):
 		return os.path.join(self.root, self.items[key]['filename'])
 
 
-	def item_exists(self, key):
+	def disk_item_exists(self, key):
 		"""
 			returns true if the item exists on disk 
 		"""
-
+		return os.path.exists(self.get_path(key))
 
 
 	def load_disk_item(self, key):
@@ -238,7 +239,8 @@ class DataObject(object):
 			returns child's type 
 		"""
 		self_index = self.nesting.index(type(self))
-		if self_index == len(self.nesting) + 1:
+		print self_index
+		if self_index == len(self.nesting) - 1:
 			return None 
 		else:
 			return self.nesting[self_index + 1]
@@ -283,16 +285,16 @@ class DataObject(object):
 			creates a mongodb document representing a given data type 
 		"""
 		child_type = self.get_child_type()
-		schema = client.schema.schema_dict[data_type]
+		schema = self.client.schema.schema_dict[child_type]
 		mongo_doc = {}
 
 		#=====[ Step 1: make mongo_doc	]=====
-		mongo_doc['root'] = os.path.join(self.root, data_type.__name__, _id)
+		mongo_doc['root'] = os.path.join(self.root, child_type.__name__, _id)
 		mongo_doc['_id'] = _id
 		mongo_doc['items'] = deepcopy(schema)
 		for v in mongo_doc['items'].values():
 			v['exists'] = False
-		if not self.client.is_leaf_type(data_type):
+		if not self.client.is_leaf_type(child_type):
 			mongo_doc['children'] = []
 
 		#=====[ Step 2: insert it into children	]=====

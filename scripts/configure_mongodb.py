@@ -65,9 +65,9 @@ def configure_mongodb(dbpath, schema_file):
 		#=====[ Step 2.1: add video	]=====
 		client.insert_object(Video, None, video_name)
 		
-		frames_dir = os.path.join(video.root, 'Frame')
-		for frame_dir in [d for d in os.listdir(frames_dir) if not d.startswith('.')]:
-			client.insert_object()
+		# frames_dir = os.path.join(video.root, 'Frame')
+		# for frame_dir in [d for d in os.listdir(frames_dir) if not d.startswith('.')]:
+		# 	client.insert_object()
 
 		#=====[ Step 2.2: add children to video	]=====
 		# video_dir = os.path.join(videos_dir, video_name)
