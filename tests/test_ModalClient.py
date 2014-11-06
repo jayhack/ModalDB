@@ -39,7 +39,7 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 		#=====[ Basic schema	]=====
 		self.schema = ModalSchema({
-									'Nesting':{Video:Frame}
+									'Nesting':[Video, Frame],
 
 									Frame: {
 												'image':{
@@ -95,7 +95,7 @@ class Test_ModalSchema(unittest.TestCase):
 
 
 
-	def test_creation_1(self):
+	def test_creation_2(self):
 		"""
 			BASIC CREATION LOADING DEFAULT SCHEMA
 			-------------------------------------

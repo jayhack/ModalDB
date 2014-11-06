@@ -52,7 +52,7 @@ class ModalClient(object):
 		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
 
 		#=====[ Step 3: Initialize schema	]=====
-		self.initialize_schema()
+		self.initialize_schema(schema)
 
 		#=====[ Step 3: Connect to/initialize MongoDB	]=====
 		self.initialize_mongodb()
@@ -119,7 +119,7 @@ class ModalClient(object):
 		#=====[ Step 2: ensure collections are there	]=====
 		for root_type in self.get_root_types():
 			if not root_type.__name__ in self.db.collection_names():
-				self.db.createCollection(root_type.__name__)
+				self.db.create_collection(root_type.__name__)
 
 
 	def clear_db(self):
@@ -161,7 +161,7 @@ class ModalClient(object):
 		"""
 			returns set of root types
 		"""
-		return set(self.schema['Nesting'][0])
+		return set([self.schema.schema_dict['Nesting'][0]])
 
 
 	def is_root_type(self, data_type):
