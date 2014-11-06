@@ -51,14 +51,21 @@ class ModalClient(object):
 		self.root = root
 		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
 
-		#=====[ Step 2: Connect to MongoDB	]=====
-		try:
-			self.mongo_client = MongoClient()
-			self.db = self.mongo_client.ModalDB
-		except:
-			raise Exception("Turn on MongoDB.")
+		#=====[ Step 3: Initialize schema	]=====
+		self.initialize_schema()
 
-		#=====[ Step 3: Load Schema	]=====
+		#=====[ Step 3: Connect to/initialize MongoDB	]=====
+		self.initialize_mongodb()
+
+
+	####################################################################################################
+	######################[ --- SCHEMA --- ]############################################################
+	####################################################################################################
+	
+	def initialize_schema(self, schema):
+		"""
+			sets self.schema 
+		"""
 		if not schema is None:
 			self.schema = schema
 		else:
@@ -68,12 +75,6 @@ class ModalClient(object):
 				raise Exception("You need to specify a schema! (or schema doesn't yet exist) See ModalSchema")
 
 
-
-
-	####################################################################################################
-	######################[ --- SCHEMA --- ]############################################################
-	####################################################################################################
-	
 	def load_schema(self):
 		"""
 			loads the schema from [self.root]/.ModalDB_schema.pkl
@@ -101,8 +102,25 @@ class ModalClient(object):
 
 
 	####################################################################################################
-	######################[ --- DATABASE MANIPULATION --- ]#############################################
+	######################[ --- MONGODB --- ]###########################################################
 	####################################################################################################
+
+	def initialize_mongodb(self):
+		"""
+			sets collections, etc.
+		"""
+		#=====[ Step 1: Connect	]=====
+		try:
+			self.mongo_client = MongoClient()
+			self.db = self.mongo_client.ModalDB
+		except:
+			raise Exception("Turn on MongoDB.")
+		
+		#=====[ Step 2: ensure collections are there	]=====
+		for root_type in self.get_root_types():
+			if not root_type.__name__ in self.db.collection_names():
+				self.db.createCollection(root_type.__name__)
+
 
 	def clear_db(self):
 		"""
@@ -122,23 +140,60 @@ class ModalClient(object):
 		raise NotImplementedError 
 
 
+	def validate_filesystem(self):
+		"""
+			Makes sure that the filesystem is properly set up 
+		"""
+		for cname in self.db.collection_names():
+			collection = self.db[cname]
+			cursor = collection.find()
+			for _ in range(collection.count()):
+				obj = cursor.next()
+				obj.validate_filesystem()
+
+
 
 	####################################################################################################
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
 
-	def get_parent_type(self, datatype):
+	def get_root_types(self):
+		"""
+			returns set of root types
+		"""
+		return set(self.schema['Nesting'][0])
+
+
+	def is_root_type(self, data_type):
+		"""
+			returns true if data_type is the root type 
+		"""
+		return data_type in self.get_root_types()
+
+
+	def get_parent_type(self, data_type):
 		"""
 			returns the parent type, according to self.schema 
 			NOTE: currently assumes that 'Nesting' is a list, where each 
 					element is a type.
 		"""
+		if self.is_root_type(data_type):
+			return None
+		else:
+			return self.schema['Nesting'][self.schema['Nesting'].index(datatype) - 1]
+
+
+	def get_child_type(self, data_type):
+		"""
+			returns the child type, according to self.schema 
+			NOTE: currently assumes that 'Nesting' is a list, where each 
+					element is a type.
+		"""
 		index = self.schema['Nesting'].index(datatype)
-		if index == 0:
+		if index == len(self.schema['Nesting']) - 1:
 			return None 
 		else:
-			return self.schema['Nesting'][index - 1]
-
+			return self.schema['Nesting'][index + 1]
 
 
 	def create_mongo_doc(self, _id, root, data_type):
@@ -159,15 +214,21 @@ class ModalClient(object):
 		for k,v in mongo_doc['items']:
 			v['exists'] = False
 
+		#=====[ Step 4: fill mongo_doc['children']	]=====
+		mongo_doc['children'] = {}
+
+		#=====[ Step 5: fill type and child_type	]=====
+		mongo_doc['datatype'] = data_type
+		mongo_doc['child_type'] = self.get_child_type(data_type)
+
 		return mongo_doc
 
 
-
-
-	def insert_object(self, _id, parent_name, data_type, method='cp'):
+	def insert_object(self, _id, data_type, method='cp'):
 		"""
+			inserts top-level objects into the DB
+
 			name: name of this object (becomes _id)
-			parent_name: name of containing object (optionally none for top-level ones)
 			data_type: subclass of DataObject
 
 			method: cp or mv 
@@ -176,18 +237,15 @@ class ModalClient(object):
 
 		"""
 		#=====[ Step 1: sanitize input	]=====
-		if not issubclass(data_object, DataObject):
+		if not issubclass(data_type, DataObject):
 			raise Exception("Inserted object must be a subclass of DataObject")
-		if not type(data_object) in self.schema.keys():
-			raise Exception("Inserted object not described in current schema")
+		if not self.is_root_type(data_type):
+			raise Exception("Inserted object must be one of the root types")
 		if not method in ['cp', 'mv']:
 			raise Exception("Only supported insertion modes are 'cp' and 'mv'")
 
-		#=====[ Step 2: find parent	]=====
-		parent_type = self.get_parent_type(data_type)
 
-
-		#=====[ Step 3: create corresponding mongo_doc 	]=====
+		#=====[ Step 2: create corresponding mongo_doc 	]=====
 		mongo_doc = self.create_mongo_doc(_id, root, data_type)
 
 
@@ -233,21 +291,6 @@ class ModalClient(object):
 		for v in self.iter_videos(verbose=verbose):
 			for f in v.iter_frames(verbose=verbose, subsample_rate=subsample_rate):
 				yield f
-
-
-
-
-
-
-	####################################################################################################
-	######################[ --- PRINTING --- ]##########################################################
-	####################################################################################################
-
-	def __str__(self):
-		"""
-			Returns a pprint of the frame schema 
-		"""
-		return '==========[ Client (Frame Storage) Schema ]==========\n %s' % pformat(self.schema)
 
 
 
