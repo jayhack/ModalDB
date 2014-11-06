@@ -91,7 +91,7 @@ class Test_ModalSchema(unittest.TestCase):
 			--------------------------------
 			merely constructs a ModalClient, loading the schema
 		"""
-		client = ModalClient(schema=self.schema)
+		client = ModalClient(root='./tests/data', schema=self.schema)
 
 
 
