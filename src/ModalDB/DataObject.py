@@ -44,8 +44,7 @@ class DataObject(object):
 			data_object.set_schema(schema)
 
 	"""
-
-	def __init__(self, mongo_doc, nesting):
+	def __init__(self, mongo_doc, client):
 		"""
 			mongo_doc: contains root, schema, etc.
 
@@ -63,7 +62,8 @@ class DataObject(object):
 		"""
 		self.mongo_doc = mongo_doc
 		self.disk_dict = self.get_disk_dict(self.mongo_doc)
-		self.nesting = nesting
+		self.nesting = client.schema.schema_dict['Nesting']
+		self.client = client
 
 
 
@@ -278,16 +278,40 @@ class DataObject(object):
 			yield
 
 
+	def add_child(self, _id):
+		"""
+			creates a mongodb document representing a given data type 
+		"""
+		child_type = self.get_child_type()
+		schema = client.schema.schema_dict[data_type]
+		mongo_doc = {}
+
+		#=====[ Step 1: make mongo_doc	]=====
+		mongo_doc['root'] = os.path.join(self.root, data_type.__name__, _id)
+		mongo_doc['_id'] = _id
+		mongo_doc['items'] = deepcopy(schema)
+		for v in mongo_doc['items'].values():
+			v['exists'] = False
+		if not self.client.is_leaf_type(data_type):
+			mongo_doc['children'] = []
+
+		#=====[ Step 2: insert it into children	]=====
+		self.children.append(mongo_doc)
+
+		#=====[ Step 3: make object 	]=====
+		child = child_type(mongo_doc, self.client)
+		child.update()
+
 
 
 	################################################################################
 	####################[ Filesystem	]###########################################
 	################################################################################
 
-	def validate_filesystem(self):
+	def update(self):
 		"""
-			validates/constructs filesystem for this data_object,
-			then calls the same on children
+			checks own filesystem in order to update
+			mongo_doc
 		"""
 		#=====[ Step 1: check root	]=====
 		if not os.path.isdir(self.root):
@@ -307,8 +331,7 @@ class DataObject(object):
 
 			#=====[ Step 3.2: call same for each child	]=====
 			for child in self.iter_children():
-				child.validate_filesystem()
-
+				child.update()
 
 
 

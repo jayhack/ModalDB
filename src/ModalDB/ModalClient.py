@@ -174,7 +174,7 @@ class ModalClient(object):
 		"""
 		assert self.is_root_type(data_type)
 		collection = self.db[data_type.__name__]
-		return data_type(collection.find_one({'_id':_id}), self.schema.schema_dict['Nesting'])
+		return data_type(collection.find_one({'_id':_id}), self)
 
 
 
@@ -284,17 +284,24 @@ class ModalClient(object):
 		#####[ TODO: sanitize input	]#####
 		#=====[ Step 2: Create mongo doc	]=====
 		mongo_doc = self.create_mongo_doc(data_type, parent, _id)
-		obj = data_type(mongo_doc, self.schema.schema_dict['Nesting'])
+		obj = data_type(mongo_doc, self)
 
 		#=====[ Step 3: validate filesystem	]=====
 		if not parent is None:
 			parent['children'].append(obj)
-			parent.validate_filesystem()
+			parent.update()
 
 		else:
-			obj.validate_filesystem()
+			obj.update()
 			self.db[data_type.__name__].insert(mongo_doc)
 
+
+
+	def update(self):
+		"""
+			fills the db from its root directory
+		"""
+		root_type = self.schema.schema_dict['Nesting'][0]
 
 
 
