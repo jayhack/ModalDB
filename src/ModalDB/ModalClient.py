@@ -16,6 +16,7 @@ jhack@stanford.edu
 '''
 import os
 import random
+from copy import copy, deepcopy
 from itertools import islice
 from pprint import pformat, pprint
 from pymongo import MongoClient
@@ -54,8 +55,11 @@ class ModalClient(object):
 		#=====[ Step 3: Initialize schema	]=====
 		self.initialize_schema(schema)
 
-		#=====[ Step 3: Connect to/initialize MongoDB	]=====
+		#=====[ Step 4: Connect to/initialize MongoDB	]=====
 		self.initialize_mongodb()
+
+		#=====[ Step 5:	Validate the filesystem ]=====
+		self.validate_filesystem()
 
 
 	####################################################################################################
@@ -144,12 +148,33 @@ class ModalClient(object):
 		"""
 			Makes sure that the filesystem is properly set up 
 		"""
-		for cname in self.db.collection_names():
-			collection = self.db[cname]
+		for data_type in self.get_root_types():
+
+			#=====[ Step 1: make sure there is a directory for it	]=====
+			if not os.path.isdir(self.get_datatype_root(data_type)):
+				os.mkdir(self.get_datatype_root(data_type))
+
+			collection = self.db[data_type.__name__]
 			cursor = collection.find()
 			for _ in range(collection.count()):
-				obj = cursor.next()
-				obj.validate_filesystem()
+				obj_doc = cursor.next()
+				obj = self.get_object(data_type, obj_doc['_id'])
+
+
+
+	####################################################################################################
+	######################[ --- ACCESSING ELEMENTS --- ]################################################
+	####################################################################################################
+
+	def get_object(self, data_type, _id):
+		"""
+			given a datatype and an _id, returns the requested 
+			datatype 
+			NOTE: data_type must currently be a root type
+		"""
+		assert self.is_root_type(data_type)
+		collection = self.db[data_type.__name__]
+		return data_type(collection.find({'_id':_id}), self.schema['Nesting'])
 
 
 
@@ -196,35 +221,45 @@ class ModalClient(object):
 			return self.schema['Nesting'][index + 1]
 
 
-	def create_mongo_doc(self, _id, root, data_type):
+	def get_datatype_root(self, data_type):
+		"""
+			returns directory for a data_type
+		"""
+		return os.path.join(self.root, data_type.__name__)
+
+
+	def get_root_object_root(self, data_type, _id):
+		"""
+			returns the directory for a root object named _id 
+		"""
+		return os.path.join(self.get_datatype_root(data_type), _id)
+
+
+	def create_mongo_doc(self, data_type, _id):
 		"""
 			creates a mongodb document representing a given data type 
 		"""
-		schema = self.schema[data_type]
+		schema = self.schema.schema_dict[data_type]
 		mongo_doc = {}
 
 		#=====[ Step 1: fill in root	]=====
-		mongo_doc['root'] = root
+		mongo_doc['root'] = self.get_root_object_root(data_type, _id)
 
 		#=====[ Step 2: fill in name	]=====
 		mongo_doc['_id'] = _id
 
 		#=====[ Step 3: fill mongo_doc['items'] ]=====
 		mongo_doc['items'] = deepcopy(schema)
-		for k,v in mongo_doc['items']:
+		for v in mongo_doc['items'].values():
 			v['exists'] = False
 
 		#=====[ Step 4: fill mongo_doc['children']	]=====
 		mongo_doc['children'] = {}
 
-		#=====[ Step 5: fill type and child_type	]=====
-		mongo_doc['datatype'] = data_type
-		mongo_doc['child_type'] = self.get_child_type(data_type)
-
 		return mongo_doc
 
 
-	def insert_object(self, _id, data_type, method='cp'):
+	def create_root_object(self, data_type, _id, method='cp'):
 		"""
 			inserts top-level objects into the DB
 
@@ -237,16 +272,19 @@ class ModalClient(object):
 
 		"""
 		#=====[ Step 1: sanitize input	]=====
-		if not issubclass(data_type, DataObject):
-			raise Exception("Inserted object must be a subclass of DataObject")
 		if not self.is_root_type(data_type):
 			raise Exception("Inserted object must be one of the root types")
 		if not method in ['cp', 'mv']:
 			raise Exception("Only supported insertion modes are 'cp' and 'mv'")
 
-
 		#=====[ Step 2: create corresponding mongo_doc 	]=====
-		mongo_doc = self.create_mongo_doc(_id, root, data_type)
+		mongo_doc = self.create_mongo_doc(data_type, _id)
+
+		#=====[ Step 3: make the directory to hold it	]=====
+		if not os.path.isdir(mongo_doc['root']):
+			os.mkdir(mongo_doc['root'])
+
+
 
 
 

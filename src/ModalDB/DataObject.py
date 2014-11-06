@@ -233,6 +233,29 @@ class DataObject(object):
 		return index == len(nesting) - 1
 
 
+	def get_child_type(self):
+		"""
+			returns child's type 
+		"""
+		self_index = self.nesting.index(type(self))
+		if self_index == len(self.nesting) + 1:
+			return None 
+		else:
+			return self.nesting[self_index + 1]
+
+
+	def get_children_dir(self):
+		"""
+			returns path to directory where children reside 
+			None if children don't exist
+		"""
+		child_type = self.get_child_type()
+		if child_type:
+			return os.path.join(self.root, child_type.__name__)
+		else:
+			return None
+
+
 	def get_child(self, _id):
 		"""
 			returns the named child, returning none if it doesn't exist
@@ -240,11 +263,7 @@ class DataObject(object):
 		if not _id in self.children:
 			return None
 		else:
-			index = nesting.index(type(self))
-			if index == len(nesting) - 1:
-				raise Exception("This object has no children")
-			child_type = nesting[index+1]
-			return child_type(children[_id], nesting)
+			return self.get_child_type()(chilrden[_id], self.nesting)
 
 
 	def iter_children(self):
@@ -276,8 +295,12 @@ class DataObject(object):
 			self.items[k]['exists'] = self.disk_item_exists(k)
 
 		#=====[ Step 3: iterate on children	]=====
-		for child in self.iter_children():
-			child.validate_filesystem()
+		child_type = self.get_child_type()
+		if child_type:
+			assert os.path.isdir(self.get_children_dir())
+			for child in self.iter_children():
+				child.validate_filesystem()
+
 
 
 
