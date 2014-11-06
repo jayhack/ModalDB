@@ -132,7 +132,7 @@ class ModalClient(object):
 		"""
 		for db_name in self.mongo_client.database_names():
 			if not db_name in ['admin', 'local']:
-				client.drop_database(db_name)
+				self.mongo_client.drop_database(db_name)
 
 
 	def fill_mongo_index(self):
@@ -174,7 +174,7 @@ class ModalClient(object):
 		"""
 		assert self.is_root_type(data_type)
 		collection = self.db[data_type.__name__]
-		return data_type(collection.find({'_id':_id}), self.schema['Nesting'])
+		return data_type(collection.find_one({'_id':_id}), self.schema.schema_dict['Nesting'])
 
 
 
@@ -259,23 +259,16 @@ class ModalClient(object):
 		return mongo_doc
 
 
-	def create_root_object(self, data_type, _id, method='cp'):
+	def create_root_object(self, data_type, _id):
 		"""
 			inserts top-level objects into the DB
 
 			name: name of this object (becomes _id)
 			data_type: subclass of DataObject
-
-			method: cp or mv 
-					- cp: copies the file 
-					- mv: moves the file
-
 		"""
 		#=====[ Step 1: sanitize input	]=====
 		if not self.is_root_type(data_type):
 			raise Exception("Inserted object must be one of the root types")
-		if not method in ['cp', 'mv']:
-			raise Exception("Only supported insertion modes are 'cp' and 'mv'")
 
 		#=====[ Step 2: create corresponding mongo_doc 	]=====
 		mongo_doc = self.create_mongo_doc(data_type, _id)
@@ -283,6 +276,8 @@ class ModalClient(object):
 		#=====[ Step 3: make the directory to hold it	]=====
 		if not os.path.isdir(mongo_doc['root']):
 			os.mkdir(mongo_doc['root'])
+
+		return data_type(mongo_doc, self.schema.schema_dict['Nesting'])
 
 
 

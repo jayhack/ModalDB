@@ -35,16 +35,16 @@ class Video(DataObject):
 			...
 	"""
 
-	def __init__(self, db, mongo_dict, root):
+	def __init__(self, mongo_dict, nesting):
 		"""
 			video_dict: dict containing mongodb description of video
 			schema: dict describing how frames are represented in DB
 			frames: list of frames
 		"""
-		super(Video, self).__init__(db, mongo_dict, root)
+		super(Video, self).__init__(mongo_dict, nesting)
 
 		#=====[ build a faster index of frames	]=====
-		self.frames_df = self.get_frames_df(mongo_dict)
+		# self.frames_df = self.get_frames_df(mongo_dict)
 
 
 

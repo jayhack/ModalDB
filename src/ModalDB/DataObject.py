@@ -62,7 +62,7 @@ class DataObject(object):
 
 		"""
 		self.mongo_doc = mongo_doc
-		self.disk_dict = self.get_disk_dict()
+		self.disk_dict = self.get_disk_dict(self.mongo_doc)
 		self.nesting = nesting
 
 
@@ -135,7 +135,7 @@ class DataObject(object):
 		"""
 			given a mongo_doc, returns a dict mapping disk-items to None
 		"""
-		return {k:None for k,v in self.items if v['mode'] == 'disk'}
+		return {k:None for k,v in self.items.items() if v['mode'] == 'disk'}
 
 
 	def get_path(self, key):
@@ -275,6 +275,42 @@ class DataObject(object):
 			yield
 		for k in self.children.keys():
 			yield self.get_child(k)
+
+
+	def create_mongo_doc(self, data_type, _id):
+		"""
+			creates a mongodb document representing a given data type 
+		"""
+		schema = self.schema.schema_dict[data_type]
+		mongo_doc = {}
+
+		#=====[ Step 1: fill in root	]=====
+		mongo_doc['root'] = os.path.join(self.get_children_dir, _id)
+
+		#=====[ Step 2: fill in name	]=====
+		mongo_doc['_id'] = _id
+
+		#=====[ Step 3: fill mongo_doc['items'] ]=====
+		mongo_doc['items'] = deepcopy(schema)
+		for v in mongo_doc['items'].values():
+			v['exists'] = False
+
+		#=====[ Step 4: fill mongo_doc['children']	]=====
+		mongo_doc['children'] = {}
+
+		return mongo_doc
+
+
+	def create_child(self, data_type, _id):
+		"""
+			inserts a child into the root object 
+		"""
+		assert data_type == self.get_child_type()
+
+		#=====[ Step 2: create corresponding mongo_doc 	]=====
+		mongo_doc = self.create_mongo_doc(data_type, _id)
+
+
 
 
 

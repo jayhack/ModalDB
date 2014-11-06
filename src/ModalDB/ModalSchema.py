@@ -71,7 +71,7 @@ class ModalSchema(object):
 		if type(schema_path_or_dict) == dict:
 			self.schema_dict = self.parse_schema(schema_path_or_dict)
 
-		elif type(schema_path_or_dict) == str:
+		elif type(schema_path_or_dict) in [str, unicode]:
 			self.load(schema_path_or_dict)
 		else:
 			raise Exception("Schema must be initialized with a dict or a path")
