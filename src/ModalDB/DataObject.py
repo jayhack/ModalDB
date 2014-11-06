@@ -270,47 +270,12 @@ class DataObject(object):
 		"""
 			iterates through all children as data objects 
 		"""
-		if is_leaf_type():
-			return
+		if 'children' in self.mongo_doc:
+			for k in self.children:
+				yield k
+		else:
+			return 
 			yield
-		for k in self.children.keys():
-			yield self.get_child(k)
-
-
-	def create_mongo_doc(self, data_type, _id):
-		"""
-			creates a mongodb document representing a given data type 
-		"""
-		schema = self.schema.schema_dict[data_type]
-		mongo_doc = {}
-
-		#=====[ Step 1: fill in root	]=====
-		mongo_doc['root'] = os.path.join(self.get_children_dir, _id)
-
-		#=====[ Step 2: fill in name	]=====
-		mongo_doc['_id'] = _id
-
-		#=====[ Step 3: fill mongo_doc['items'] ]=====
-		mongo_doc['items'] = deepcopy(schema)
-		for v in mongo_doc['items'].values():
-			v['exists'] = False
-
-		#=====[ Step 4: fill mongo_doc['children']	]=====
-		mongo_doc['children'] = {}
-
-		return mongo_doc
-
-
-	def create_child(self, data_type, _id):
-		"""
-			inserts a child into the root object 
-		"""
-		assert data_type == self.get_child_type()
-
-		#=====[ Step 2: create corresponding mongo_doc 	]=====
-		mongo_doc = self.create_mongo_doc(data_type, _id)
-
-
 
 
 
@@ -321,10 +286,12 @@ class DataObject(object):
 
 	def validate_filesystem(self):
 		"""
-			validates personal filesystem, then calls recursively on children 
+			validates/constructs filesystem for this data_object,
+			then calls the same on children
 		"""
 		#=====[ Step 1: check root	]=====
-		assert os.path.isdir(self.root)
+		if not os.path.isdir(self.root):
+			os.mkdir(self.root)
 
 		#=====[ Step 2: for each item, update...	]=====
 		for k in self.disk_dict.keys():
@@ -333,7 +300,12 @@ class DataObject(object):
 		#=====[ Step 3: iterate on children	]=====
 		child_type = self.get_child_type()
 		if child_type:
-			assert os.path.isdir(self.get_children_dir())
+
+			#=====[ Step 3.1: make directory for children	]=====
+			if not os.path.isdir(self.get_children_dir()):
+				os.mkdir(self.get_children_dir())
+
+			#=====[ Step 3.2: call same for each child	]=====
 			for child in self.iter_children():
 				child.validate_filesystem()
 

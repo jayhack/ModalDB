@@ -188,12 +188,25 @@ class ModalClient(object):
 		"""
 		return set([self.schema.schema_dict['Nesting'][0]])
 
+	def get_leaf_types(self):
+		"""
+			returns set of leaf types 
+		"""
+		return set([self.schema.schema_dict['Nesting'][-1]])
+
 
 	def is_root_type(self, data_type):
 		"""
-			returns true if data_type is the root type 
+			returns true if data_type is a root type 
 		"""
 		return data_type in self.get_root_types()
+
+
+	def is_leaf_type(self, data_type):
+		"""
+			returns true if data_type is a leaf type 
+		"""
+		return data_type in self.get_leaf_types()
 
 
 	def get_parent_type(self, data_type):
@@ -235,7 +248,7 @@ class ModalClient(object):
 		return os.path.join(self.get_datatype_root(data_type), _id)
 
 
-	def create_mongo_doc(self, data_type, _id):
+	def create_mongo_doc(self, data_type, parent, _id):
 		"""
 			creates a mongodb document representing a given data type 
 		"""
@@ -243,7 +256,10 @@ class ModalClient(object):
 		mongo_doc = {}
 
 		#=====[ Step 1: fill in root	]=====
-		mongo_doc['root'] = self.get_root_object_root(data_type, _id)
+		if parent == None:
+			mongo_doc['root'] = self.get_root_object_root(data_type, _id)
+		else:
+			mongo_doc['root'] = os.path.join(parent['root'], data_type.__name__, _id)
 
 		#=====[ Step 2: fill in name	]=====
 		mongo_doc['_id'] = _id
@@ -254,32 +270,30 @@ class ModalClient(object):
 			v['exists'] = False
 
 		#=====[ Step 4: fill mongo_doc['children']	]=====
-		mongo_doc['children'] = {}
+		if not self.is_leaf_type(data_type):
+			mongo_doc['children'] = []
 
 		return mongo_doc
 
 
-	def create_root_object(self, data_type, _id):
+
+	def insert_object(self, data_type, parent, _id):
 		"""
-			inserts top-level objects into the DB
-
-			name: name of this object (becomes _id)
-			data_type: subclass of DataObject
+			inserts objects into the DB 
 		"""
-		#=====[ Step 1: sanitize input	]=====
-		if not self.is_root_type(data_type):
-			raise Exception("Inserted object must be one of the root types")
+		#####[ TODO: sanitize input	]#####
+		#=====[ Step 2: Create mongo doc	]=====
+		mongo_doc = self.create_mongo_doc(data_type, parent, _id)
+		obj = data_type(mongo_doc, self.schema.schema_dict['Nesting'])
 
-		#=====[ Step 2: create corresponding mongo_doc 	]=====
-		mongo_doc = self.create_mongo_doc(data_type, _id)
+		#=====[ Step 3: validate filesystem	]=====
+		if not parent is None:
+			parent['children'].append(obj)
+			parent.validate_filesystem()
 
-		#=====[ Step 3: make the directory to hold it	]=====
-		if not os.path.isdir(mongo_doc['root']):
-			os.mkdir(mongo_doc['root'])
-
-		return data_type(mongo_doc, self.schema.schema_dict['Nesting'])
-
-
+		else:
+			obj.validate_filesystem()
+			self.db[data_type.__name__].insert(mongo_doc)
 
 
 
