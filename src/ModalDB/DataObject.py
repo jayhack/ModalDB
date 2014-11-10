@@ -34,6 +34,7 @@ jhack@stanford.edu
 ##################
 '''
 import os
+import dill as pickle
 from copy import deepcopy
 
 class DataObject(object):
@@ -239,7 +240,6 @@ class DataObject(object):
 			returns child's type 
 		"""
 		self_index = self.nesting.index(type(self))
-		print self_index
 		if self_index == len(self.nesting) - 1:
 			return None 
 		else:
@@ -292,6 +292,11 @@ class DataObject(object):
 		mongo_doc['root'] = os.path.join(self.root, child_type.__name__, _id)
 		mongo_doc['_id'] = _id
 		mongo_doc['items'] = deepcopy(schema)
+		for item in mongo_doc['items'].values():
+			if 'load_func' in item:
+				item['load_func'] = pickle.dumps(item['load_func'])
+			if 'save_func' in item:
+				item['save_func'] = pickle.dumps(item['save_func'])
 		for v in mongo_doc['items'].values():
 			v['exists'] = False
 		if not self.client.is_leaf_type(child_type):
@@ -331,7 +336,12 @@ class DataObject(object):
 			if not os.path.isdir(self.get_children_dir()):
 				os.mkdir(self.get_children_dir())
 
-			#=====[ Step 3.2: call same for each child	]=====
+			#=====[ Step 3.2: add child if necessary	]=====
+			for c_id in [x for x in os.listdir(self.get_children_dir()) if not x.startswith('.')]:
+				if self.get_child(c_id) is None:
+					self.add_child(c_id)
+
+			#=====[ Step 3.3: call same for each child	]=====
 			for child in self.iter_children():
 				child.update()
 

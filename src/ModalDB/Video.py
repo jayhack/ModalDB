@@ -35,16 +35,16 @@ class Video(DataObject):
 			...
 	"""
 
-	def __init__(self, mongo_dict, client):
+	def __init__(self, mongo_doc, client):
 		"""
 			video_dict: dict containing mongodb description of video
 			schema: dict describing how frames are represented in DB
 			frames: list of frames
 		"""
-		super(Video, self).__init__(mongo_dict, client)
+		super(Video, self).__init__(mongo_doc, client)
 
 		#=====[ build a faster index of frames	]=====
-		# self.frames_df = self.get_frames_df(mongo_dict)
+		# self.frames_df = self.get_frames_df(mongo_doc)
 
 
 
@@ -54,14 +54,14 @@ class Video(DataObject):
 	####################[ Frame Data	]###########################################
 	################################################################################
 
-	def get_frames_df(self, mongo_dict):
+	def get_frames_df(self, mongo_doc):
 		"""
 			sets self.frames_df to be a more complete index of 
 			which frames, including which has what items already
 
 		"""
 		rows = []
-		for frame_dict in mongo_dict['frames'].values():
+		for frame_dict in mongo_doc['frames'].values():
 			frame = Frame(self.db, frame_dict, frame_dict['root_dir'])
 			d = {k:frame.item_exists(k) for k in frame.keys() if not k == '_id'}
 			d['_id'] = frame_dict['_id']
@@ -85,8 +85,8 @@ class Video(DataObject):
 		if not t in self.frames_df.index:
 			return None
 		else:
-			mongo_dict = self.mongo_dict['frames'][str(t)]
-			return Frame(self.db, mongo_dict, mongo_dict['root_dir'])
+			mongo_doc = self.mongo_doc['frames'][str(t)]
+			return Frame(self.db, mongo_doc, mongo_doc['root_dir'])
 
 
 	def get_random_frame(self):

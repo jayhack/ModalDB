@@ -16,6 +16,7 @@ jhack@stanford.edu
 '''
 import os
 import random
+import dill as pickle
 from copy import copy, deepcopy
 from itertools import islice
 from pprint import pformat, pprint
@@ -266,6 +267,13 @@ class ModalClient(object):
 
 		#=====[ Step 3: fill mongo_doc['items'] ]=====
 		mongo_doc['items'] = deepcopy(schema)
+		#####[ TODO: GET RID OF THIS	]#####
+		for item in mongo_doc['items'].values():
+			if 'load_func' in item:
+				item['load_func'] = pickle.dumps(item['load_func'])
+			if 'save_func' in item:
+				item['save_func'] = pickle.dumps(item['save_func'])
+
 		for v in mongo_doc['items'].values():
 			v['exists'] = False
 
@@ -302,6 +310,10 @@ class ModalClient(object):
 			fills the db from its root directory
 		"""
 		root_type = self.schema.schema_dict['Nesting'][0]
+		d = os.path.join(self.root, root_type.__name__)
+		for _id in [x for x in os.listdir(d) if not x.startswith('.')]:
+			self.insert_object(root_type, None, _id)
+
 
 
 
