@@ -17,16 +17,17 @@ jhack@stanford.edu
 '''
 import os
 import shutil
-
+from copy import copy, deepcopy
 import unittest
 import nose
-from copy import copy, deepcopy
 from nose.tools import *
 from scipy.io import loadmat, savemat
 from scipy.misc import imsave, imread
 
 from ModalDB import Frame, Video
 from ModalDB.ModalDicts import DiskDict, MemoryDict
+
+from schema_example import schema_ex
 
 class Test_ModalSchema(unittest.TestCase):
 
@@ -54,27 +55,7 @@ class Test_ModalSchema(unittest.TestCase):
 			creates basic schema 
 		"""
 		self.reset_image()
-		self.schema_ex = {
-							'Nesting':[Video, Frame],
-
-							Frame: {
-										'image':{
-													'mode':'disk',
-													'filename':'image.png',
-													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p: imsave(p, x)
-												},
-										'subtitles':{
-														'mode':'memory'
-													}
-									},
-							Video: {
-
-										'subtitles':{
-													'mode':'memory'
-													}
-									}
-						}
+		self.schema_ex = schema_ex
 
 		self.mongo_dict = {	
 						'root':self.root,
