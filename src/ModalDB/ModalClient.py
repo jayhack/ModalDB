@@ -324,7 +324,9 @@ class ModalClient(object):
 			parent.add_child(datatype, _id)
 
 		#=====[ Step 7: create and return datatype	]=====
-		# pprint(mongo_doc)
+		print '====[ Mongo Doc: ]===='
+		pprint(mongo_doc)
+		print '\n\n====[ Schema: ]===='
 		pprint(schema)
 		return datatype(mongo_doc, schema)
 

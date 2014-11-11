@@ -28,6 +28,7 @@ from ModalDB import Frame, Video
 from ModalDB.ModalDicts import DiskDict, MemoryDict
 
 from schema_example import schema_ex
+from dataobject_example import video_data, frame_data
 
 class Test_ModalSchema(unittest.TestCase):
 
@@ -56,19 +57,18 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 		self.reset_image()
 		self.schema_ex = schema_ex
-		self.mongo_dict = {	
-						'root':self.root,
-						'items':{
-									'image':{
-												'exists':True,
-											},
-									'subtitles':{
-												'exists':True,
-												'data':'hello, world!'
-									}
-								}
-					}
-
+		self.mongo_doc = {
+							'_id': 'test_video',
+							'children': {'Frame': []},
+ 							'items': {
+ 										'image':{'present': True},
+										'subtitles':{
+														'present': True,
+														'data':'hello, world!'
+													}
+									},
+							'root':self.root
+						}
 
 
 
@@ -84,7 +84,7 @@ class Test_ModalSchema(unittest.TestCase):
 			----------------------------
 			merely constructs a ModalSchema
 		"""
-		d = DiskDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = DiskDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 
 
 	def test_getitem_diskdict(self):
@@ -94,7 +94,7 @@ class Test_ModalSchema(unittest.TestCase):
 			gets the image and confirms that it loaded correctly
 		"""
 		self.reset_image()
-		d = DiskDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = DiskDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		img = d['image']
 		self.assertEqual(img.shape, (512, 512, 3))
 
@@ -107,7 +107,7 @@ class Test_ModalSchema(unittest.TestCase):
 			and confirms that it saved correctly
 		"""
 		self.reset_image()
-		d = DiskDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = DiskDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		img = d['image']
 		self.remove_image()
 		d['image'] = img
@@ -121,7 +121,7 @@ class Test_ModalSchema(unittest.TestCase):
 			removes image, then replaces it 
 		"""
 		self.reset_image()
-		d = DiskDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = DiskDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		img = d['image']
 
 		del d['image']
@@ -146,7 +146,7 @@ class Test_ModalSchema(unittest.TestCase):
 			-------------------------------
 			merely constructs a MemoryDict
 		"""
-		d = MemoryDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = MemoryDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 
 
 	def test_getitem_memdict(self):
@@ -155,7 +155,7 @@ class Test_ModalSchema(unittest.TestCase):
 			------------------------------
 			gets subtitles and tests length
 		"""
-		d = MemoryDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = MemoryDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		self.assertEqual(d['subtitles'], 'hello, world!')
 
 
@@ -165,7 +165,7 @@ class Test_ModalSchema(unittest.TestCase):
 			------------------------------
 			sets subtitles to something new
 		"""
-		d = MemoryDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = MemoryDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		d['subtitles'] = "konnichiwa, sekai!"
 		self.assertEqual(d['subtitles'], "konnichiwa, sekai!")
 
@@ -176,6 +176,6 @@ class Test_ModalSchema(unittest.TestCase):
 			------------------------------
 			removes subtitles, asserts they are actually gone
 		"""
-		d = MemoryDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
+		d = MemoryDict(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		del d['subtitles']
 		self.assertEquals(d['subtitles'], None)

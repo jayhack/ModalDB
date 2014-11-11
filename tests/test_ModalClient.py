@@ -108,7 +108,7 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 		client = ModalClient(root=data_dir)
 		client.clear_db()
-			
+
 
 	def test_insertion_cp(self):
 		"""
@@ -119,7 +119,7 @@ class Test_ModalSchema(unittest.TestCase):
 		client = ModalClient(root=data_dir)
 		client.clear_db()
 		video = client.insert(Video, 'test_video', self.video_data, method='cp')
-		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=frame, method='cp')
+		# frame = client.insert(Frame, 'test_frame', self.frame_data, method='cp')
 
 
 	
