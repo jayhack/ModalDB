@@ -90,7 +90,7 @@ class Test_DataObject(unittest.TestCase):
 			--------------
 			merely constructs a DataObject
 		"""
-		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
+		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame], None)
 
 
 	def test_getitem(self):
@@ -100,7 +100,7 @@ class Test_DataObject(unittest.TestCase):
 			gets image and subtitles
 		"""
 		self.reset_image()
-		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
+		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame], None)
 		self.assertEqual(d['image'].shape, (512, 512, 3))
 		self.assertEqual(d['subtitles'], 'hello, world!')
 
@@ -112,7 +112,7 @@ class Test_DataObject(unittest.TestCase):
 			gets image and subtitles
 		"""
 		self.reset_image()
-		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
+		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame], None)
 
 		img = d['image']
 		sub = d['subtitles']
@@ -133,7 +133,7 @@ class Test_DataObject(unittest.TestCase):
 			removes both, makes sure it works
 		"""
 		self.reset_image()
-		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
+		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame], None)
 		
 		del d['image']
 		del d['subtitles']
@@ -151,7 +151,7 @@ class Test_DataObject(unittest.TestCase):
 		"""
 		self.reset_image()
 		mongo_doc = deepcopy(self.mongo_doc)
-		d = DataObject(mongo_doc, self.schema_ex[Frame])
+		d = DataObject(mongo_doc, self.schema_ex[Frame], None)
 
 		self.assertTrue(mongo_doc['items']['image']['present'])
 		self.assertTrue(mongo_doc['items']['subtitles']['present'])
