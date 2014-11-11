@@ -32,7 +32,7 @@ class ModalClient(object):
 		--------------
 
 		# Initialization
-		mc = ModalClient(FrameSchema)
+		mc = ModalClient(Schema)
 
 		# Accessing videos 
 		video = mc.get_video('...')
@@ -51,7 +51,6 @@ class ModalClient(object):
 		"""
 		#=====[ Step 1: Grab root from envvars	]=====
 		self.root = root
-		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
 
 		#=====[ Step 3: Initialize schema	]=====
 		self.initialize_schema(schema)
@@ -63,14 +62,22 @@ class ModalClient(object):
 		self.validate_filesystem()
 
 
+
+
+
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
 	
 	def initialize_schema(self, schema):
 		"""
-			sets self.schema 
+			sets self.schema
+			if schema is None, loads default one from disk.
 		"""
+		#=====[ Step 1: Set schema path	]=====
+		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
+
+		#=====[ Step 2: Load schema	]=====
 		if not schema is None:
 			self.schema = schema
 		else:
@@ -81,23 +88,12 @@ class ModalClient(object):
 
 
 	def load_schema(self):
-		"""
-			loads the schema from [self.root]/.ModalDB_schema.pkl
-		"""
 		return ModalSchema(self.schema_path)
 
-
 	def save_schema(self):
-		"""
-			saves the schema to $DATA_DIR/.ModalDB_schema.pkl
-		"""
 		self.schema.save(self.schema_path)
 
-
 	def print_schema(self):
-		"""
-			Displays the current schema 
-		"""
 		pprint(self.schema.schema_dict)
 
 
@@ -121,7 +117,7 @@ class ModalClient(object):
 		except:
 			raise Exception("Turn on MongoDB.")
 		
-		#=====[ Step 2: ensure collections are there	]=====
+		#=====[ Step 2: Ensure collections exist	]=====
 		for root_type in self.get_root_types():
 			if not root_type.__name__ in self.db.collection_names():
 				self.db.create_collection(root_type.__name__)
@@ -163,6 +159,8 @@ class ModalClient(object):
 
 
 
+
+
 	####################################################################################################
 	######################[ --- ACCESSING ELEMENTS --- ]################################################
 	####################################################################################################
@@ -182,6 +180,13 @@ class ModalClient(object):
 	####################################################################################################
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
+
+	def get_datatypes(self):
+		"""
+			returns set of types of DataObjects accessible in this DB
+		"""
+		return self.schema.schema_dict.keys()
+
 
 	def get_root_types(self):
 		"""
