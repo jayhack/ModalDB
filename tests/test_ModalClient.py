@@ -160,6 +160,7 @@ class Test_ModalSchema(unittest.TestCase):
 
 		self.assertEqual(video['summary'], 'hello, world!')
 		self.assertEqual(frame['subtitles'], 'hello, world!')
+		self.assertEqual(frame._id, 'test_video/test_frame')
 		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
 		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
@@ -178,10 +179,11 @@ class Test_ModalSchema(unittest.TestCase):
 		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='mv')
 
 		video = client.get(Video, 'test_video')
-		frame = client.get(Frame, 'test_frame')
+		frame = client.get(Frame, 'test_video/test_frame')
 
 		self.assertEqual(video['summary'], 'hello, world!')
 		self.assertEqual(frame['subtitles'], 'hello, world!')
+		self.assertEqual(frame._id, 'test_video/test_frame')
 		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
 		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
@@ -196,16 +198,20 @@ class Test_ModalSchema(unittest.TestCase):
 		self.reset()
 		client = ModalClient(root=data_dir)
 		client.clear_db()
-		video = client.insert(Video, 'test_video', self.video_data, method='mv')
-		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='mv')
+		video = client.insert(Video, 'test_video', self.video_data, method='cp')
+		client.insert(Frame, 'test_frame_1', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'test_frame_2', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'test_frame_3', self.frame_data, parent=video, method='cp')
 
 		video = client.get(Video, 'test_video')
-		frame = client.get(Frame, 'test_frame')
 
-		self.assertEqual(video['summary'], 'hello, world!')
-		self.assertEqual(frame['subtitles'], 'hello, world!')
-		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
-		self.assertEqual(frame['image'].shape, (512, 512, 3))
+		frame1 = video.get_child(Frame, 0)
+		frame2 = video.get_child(Frame, 1)
+		frame3 = video.get_child(Frame, 2)				
+
+		self.assertEqual(frame3['subtitles'], 'hello, world!')
+		self.assertEqual(frame3['image'].shape, (512, 512, 3))
+		self.assertEqual(frame3._id, 'test_video/test_frame_3')
 
 	
 

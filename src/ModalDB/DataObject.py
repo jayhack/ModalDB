@@ -60,16 +60,18 @@ class DataObject(object):
 			- items: metadata on contained items (exists, etc.)
 
 	"""
-	def __init__(self, mongo_doc, schema):
+	def __init__(self, mongo_doc, schema, client):
 		"""
 			Args:
 			-----
 			- mongo_doc: dict containing root, in-memory items
+			- schema: dict containing schema for this object
 			- client: reference to ModalClient object
 		"""
-		self.id = mongo_doc['_id']
+		self._id = mongo_doc['_id']
 		self.root = mongo_doc['root']
 		self.schema = schema
+		self.client = client
 		self.items = {
 						'disk':DiskDict(mongo_doc, self.schema),
 						'memory':MemoryDict(mongo_doc, self.schema)
@@ -155,7 +157,7 @@ class DataObject(object):
 	def is_child_type(self, datatype):
 		return datatype in self.child_types()
 
-	def get_children_ids(self, datatype):
+	def get_child_ids(self, datatype):
 		assert self.is_child_type(datatype)
 		return self.children[datatype.__name__]
 
@@ -165,14 +167,23 @@ class DataObject(object):
 
 	def add_child(self, datatype, _id):
 		assert self.is_child_type(datatype)
-		self.get_children_ids(datatype).append(_id)
+		self.get_child_ids(datatype).append(_id)
+		out = self.client.get_collection(type(self)).update(
+					{'_id':self._id}, 
+					{'$set':{'children':self.children}},
+					upsert=False
+		)
 
-	def get_child(self, datatype, _id):
+
+	def get_child(self, datatype, index):
 		assert self.is_child_type(datatype)
-		raise NotImplementedError
+		child_ids = self.get_child_ids(datatype)
+		assert index >= 0 and index < len(child_ids)
+		return self.client.get(datatype, child_ids[index])
 
 	def iter_children(self):
-		raise NotImplementedError
+		for child_id in self.get_child_ids():
+			yield self.get_child(self, datatype)
 
 
 

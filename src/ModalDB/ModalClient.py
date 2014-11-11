@@ -182,8 +182,10 @@ class ModalClient(object):
 		"""
 		assert self.is_valid_datatype(datatype)
 		mongo_doc = self.get_collection(datatype).find_one({'_id':_id})
+		if not mongo_doc:
+			raise KeyError("No such object in DB")
 		schema = self.get_schema(datatype)
-		return datatype(mongo_doc, schema)
+		return datatype(mongo_doc, schema, self)
 
 
 	def get_disk_items(self, datatype, item_data):
@@ -303,12 +305,14 @@ class ModalClient(object):
 			if schema[k]['mode'] == 'disk':
 				assert os.path.exists(v)
 
-		#=====[ Step 3: get root directory	]=====
+		#=====[ Step 3: get root directory, _id from parent	]=====
 		if parent is None:
 			parent_dir = self.get_root_type_dir(datatype)
+			root = os.path.join(parent_dir, _id)
 		else:
 			parent_dir = parent.get_child_dir(datatype)
-		root = os.path.join(parent_dir, _id)
+			root = os.path.join(parent_dir, _id)
+			_id = parent._id + '/' + _id
 
 		#=====[ Step 4: create object dir	]=====
 		self.create_object_dir(datatype, root, item_data, method)
@@ -322,7 +326,7 @@ class ModalClient(object):
 			parent.add_child(datatype, _id)
 
 		#=====[ Step 7: create and return datatype	]=====
-		return datatype(mongo_doc, schema)
+		return datatype(mongo_doc, schema, self)
 
 
 

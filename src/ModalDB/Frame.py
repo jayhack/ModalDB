@@ -42,11 +42,8 @@ class Frame(DataObject):
 
 	"""
 
-	def __init__(self, mongo_doc, client):
-		"""
-			parent: reference to Video instance
-		"""
-		super(Frame, self).__init__(mongo_doc, client)
+	def __init__(self, mongo_doc, schema, client):
+		super(Frame, self).__init__(mongo_doc, schema, client)
 		
 
 
