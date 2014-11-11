@@ -56,7 +56,6 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 		self.reset_image()
 		self.schema_ex = schema_ex
-
 		self.mongo_dict = {	
 						'root':self.root,
 						'items':{

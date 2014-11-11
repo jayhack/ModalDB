@@ -27,6 +27,8 @@ from scipy.misc import imsave, imread
 
 from ModalDB import *
 
+from schema_example import schema_ex
+
 class Test_ModalSchema(unittest.TestCase):
 
 	################################################################################
@@ -38,32 +40,10 @@ class Test_ModalSchema(unittest.TestCase):
 			creates basic schema, data dir to store it,
 		"""
 		#=====[ Basic schema	]=====
-		self.schema = ModalSchema({
-									'Nesting':[Video, Frame],
-
-									Frame: {
-												'image':{
-															'mode':'disk',
-															'load_func':lambda p: imread(p),
-															'save_func':lambda x, p: imsave(x, p)
-														},	
-												'skeleton':{
-															'mode':'disk',
-															'load_func':lambda p: loadmat(p)
-														}
-											},
-
-									Video: {
-
-												'subtitles':{
-															'mode':'memory'
-															}
-											}
-								})
+		self.schema = ModalSchema(schema_ex)
 
 		#=====[ Save it for tests	]=====
-		self.data_dir = 'tests/data'
-		os.environ['DATA_DIR'] = self.data_dir
+		self.data_dir = os.path.join(os.path.split(__file__)[0], 'data_ModalClient')
 		self.schema_path = os.path.join(self.data_dir, '.ModalDB_schema.pkl')
 		self.schema.save(self.schema_path)
 		self.old_data_dir = os.environ['DATA_DIR']
