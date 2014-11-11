@@ -171,23 +171,23 @@ class Test_ModalSchema(unittest.TestCase):
 	####################[ Modification	]###########################################
 	################################################################################
 
-	# def test_add_item_1(self):
-	# 	"""
-	# 		ADD ITEM TO FRAME
-	# 		-----------------
-	# 		should perfectly add an item to the frame 
-	# 	"""
-	# 	schema = ModalSchema(deepcopy(self.schema_ex))
-	# 	item_dict = {
-	# 					'mode':'disk',
-	# 					'filename':'depth_image.mat',
-	# 					'load_func':lambda p: loadmat(p),
-	# 					'save_func':lambda x, p: savemat(x, p)
-	# 				}
-	# 	schema.add_item(Frame, 'depth_image', item_dict)
-	# 	self.assertTrue('depth_image' in schema.schema_dict[Frame])
-	# 	self.assertTrue('filename' in schema.schema_dict[Frame]['depth_image']) 
-	# 	self.assertTrue(schema.schema_dict[Frame]['depth_image']['filename'] == 'depth_image.mat')
+	def test_add_item_1(self):
+		"""
+			ADD ITEM TO FRAME
+			-----------------
+			should perfectly add an item to the frame 
+		"""
+		schema = ModalSchema(deepcopy(self.schema_ex))
+		item_dict = {
+						'mode':'disk',
+						'filename':'depth_image.mat',
+						'load_func':lambda p: loadmat(p),
+						'save_func':lambda x, p: savemat(x, p)
+					}
+		schema.add_item(Frame, 'depth_image', item_dict)
+		self.assertTrue('depth_image' in schema.schema_dict[Frame])
+		self.assertTrue('filename' in schema.schema_dict[Frame]['depth_image']) 
+		self.assertTrue(schema.schema_dict[Frame]['depth_image']['filename'] == 'depth_image.mat')
 
 
 
