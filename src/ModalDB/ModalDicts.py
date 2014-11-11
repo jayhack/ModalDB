@@ -25,8 +25,7 @@ import os
 
 class ModalDict(object):
 	"""
-		Override the following:
-			self.set_item, self.get_item, self.del_item 
+		Base class for DiskDict, MemoryDict, DynamicDict
 	"""
 
 	def __init__(self, mongo_doc, datatype_schema):

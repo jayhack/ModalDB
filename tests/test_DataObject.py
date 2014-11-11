@@ -42,22 +42,28 @@ class Test_DataObject(unittest.TestCase):
 							'Nesting':[Video, Frame],
 
 							Frame: {
-										'image':{
+									'image':{
 													'mode':'disk',
 													'filename':'image.png',
 													'load_func':lambda p: imread(p),
 													'save_func':lambda x, p: imsave(p, x)
-												},
-										'subtitles':{
-														'mode':'memory'
-													}
+											},
+									'subtitles':{
+													'mode':'memory'
+												}
 									},
 							Video: {
 
-										'subtitles':{
+									'description':{
 													'mode':'memory'
-													}
-									}
+												},
+									'thumbnail':{
+													'mode':'disk',
+													'filename':'thumbnail.png',
+													'load_func':lambda p: imread(p),
+													'save_func':lambda x, p:imsave(p, x)
+												}
+								}
 						}
 
 		self.mongo_doc = {	
@@ -70,9 +76,10 @@ class Test_DataObject(unittest.TestCase):
 										'subtitles':{
 													'exists':True,
 													'data':'hello, world!'
-										}
+												}
 									}
-					}
+						}
+					
 		self.image_path = os.path.join(self.root, 'image.png')
 		self.image_backup_path = os.path.join(self.root, 'image.backup.png')
 		shutil.copy(self.image_backup_path, self.image_path)

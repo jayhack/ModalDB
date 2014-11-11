@@ -51,20 +51,6 @@ class DataObject(object):
 			disk_item = data_object[disk_item_name] # loads from disk
 			mem_item = data_object[mem_item_name] # grabs from MongoDB
 
-
-		mongo_doc: 
-		----------
-
-			contains record of all items, including:
-				- wether they are present or not (allows for fast search)
-				- their mode of storage
-				- NOT their load-funcs; this is handled in schema
-				- if they are in-memory, contains their actual data
-
-
-
-		Maybe try having multiple different dicts, like self.items[mode_name]['x']
-		hmm... so mongo_doc doesn't get confused
 	"""
 	def __init__(self, mongo_doc, schema):
 		"""
@@ -80,6 +66,7 @@ class DataObject(object):
 						'disk':DiskDict(mongo_doc, self.schema),
 						'memory':MemoryDict(mongo_doc, self.schema)
 					}
+
 
 
 	################################################################################
