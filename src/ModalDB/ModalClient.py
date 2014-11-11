@@ -136,7 +136,7 @@ class ModalClient(object):
 
 
 	####################################################################################################
-	######################[ --- GETTING ELEMENTS --- ]##################################################
+	######################[ --- UTILS --- ]#############################################################
 	####################################################################################################
 
 	def get_datatypes(self):
@@ -171,22 +171,20 @@ class ModalClient(object):
 	def get_root_type_dir(self, datatype):
 		return os.path.join(self.root, datatype.__name__)
 
+
+	####################################################################################################
+	######################[ --- GETTING/INSERTING --- ]#################################################
+	####################################################################################################
+
 	def get(self, datatype, _id):
 		"""
 			returns object of type datatype and named _id
 		"""
 		assert self.is_valid_datatype(datatype)
-		collection = self.get_collection(datatype).find_one({'_id':_id})
+		mongo_doc = self.get_collection(datatype).find_one({'_id':_id})
 		schema = self.get_schema(datatype)
 		return datatype(mongo_doc, schema)
 
-
-
-
-
-	####################################################################################################
-	######################[ --- INSERTING ELEMENTS --- ]################################################
-	####################################################################################################
 
 	def get_disk_items(self, datatype, item_data):
 		"""
@@ -324,10 +322,6 @@ class ModalClient(object):
 			parent.add_child(datatype, _id)
 
 		#=====[ Step 7: create and return datatype	]=====
-		print '====[ Mongo Doc: ]===='
-		pprint(mongo_doc)
-		print '\n\n====[ Schema: ]===='
-		pprint(schema)
 		return datatype(mongo_doc, schema)
 
 
