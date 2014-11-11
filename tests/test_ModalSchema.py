@@ -23,6 +23,7 @@ from nose.tools import *
 from scipy.io import loadmat, savemat
 from scipy.misc import imsave, imread
 from ModalDB import *
+from schema_example import schema_ex
 
 class Test_ModalSchema(unittest.TestCase):
 
@@ -31,37 +32,10 @@ class Test_ModalSchema(unittest.TestCase):
 	################################################################################
 
 	def setUp(self):
-		"""
-			creates basic schema 
-		"""
-		self.schema_ex = {
-							Frame: {
-										'image':{
-													'mode':'disk',
-													'filename':'image.png',
-													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p: imsave(p, x)
-												},
-										'subtitles':{
-													'mode':'memory'
-													},
-
-									},
-							Video: {
-
-										'summary':{
-													'mode':'memory'
-												},
-										'thumbnail':{
-													'mode':'disk',
-													'filename':'thumbnail.png',
-													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p: imsave(p, x)
-												},
-										'contains':[Frame]
-									}
-					}
-
+		self.schema_ex = schema_ex
+		
+	def tearDown(self):
+		pass
 
 
 
