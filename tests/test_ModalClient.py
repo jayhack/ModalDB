@@ -179,6 +179,7 @@ class Test_ModalSchema(unittest.TestCase):
 
 		video = client.get(Video, 'test_video')
 		frame = client.get(Frame, 'test_frame')
+
 		self.assertEqual(video['summary'], 'hello, world!')
 		self.assertEqual(frame['subtitles'], 'hello, world!')
 		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
