@@ -18,6 +18,7 @@ jhack@stanford.edu
 ##################
 """
 import os
+import shutil
 import dill as pickle
 import unittest 
 from copy import copy, deepcopy
@@ -45,8 +46,8 @@ class Test_ModalSchema(unittest.TestCase):
 
 
 	def reset_images(self):
-		shutil.copy(thumbnail_backup_path, thumbnail_path)
-		shutil.copy(image_backup_path, image_path)
+		shutil.copy(self.thumbnail_backup_path, self.thumbnail_path)
+		shutil.copy(self.image_backup_path, self.image_path)
 
 
 	def setUp(self):
@@ -76,7 +77,7 @@ class Test_ModalSchema(unittest.TestCase):
 			--------------------------------
 			merely constructs a ModalClient, loading the schema
 		"""
-		client = ModalClient(root=self.data_dir, schema=self.schema)
+		client = ModalClient(root=data_dir, schema=self.schema)
 
 
 	def test_creation_2(self):
@@ -85,21 +86,29 @@ class Test_ModalSchema(unittest.TestCase):
 			-------------------------------------
 			merely constructs a ModalClient, loading the schema
 		"""
-		client = ModalClient(root=self.data_dir)
+		client = ModalClient(root=data_dir)
 		schema = client.schema
-		self.assertTrue(type(schema.schema_dict) == dict)
-		self.assertTrue('filename' in schema.schema_dict[Frame]['image']) 
-		self.assertTrue('filename' in schema.schema_dict[Frame]['skeleton']) 
-		self.assertTrue(schema.schema_dict[Frame]['image']['filename'] == 'image')
-		self.assertTrue(not 'filename' in schema.schema_dict[Video]['subtitles'])
+		self.assertTrue('filename' in schema[Frame]['image']) 
+		self.assertTrue(schema[Frame]['image']['filename'] == 'image.png')
+		self.assertTrue(not 'filename' in schema[Video]['summary'])
 
 
 
 
 
 	################################################################################
-	####################[ DATA INSERTION	]#######################################
+	####################[ DATA INSERTION/DELETION	]###############################
 	################################################################################
+
+	def test_clear_db(self):
+		"""
+			BASIC INSERTION OF VIDEO AND FRAME (CP)
+			---------------------------------------
+			constructs a video and a frame, inserts them via CP 
+		"""
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+			
 
 	def test_insertion_cp(self):
 		"""
@@ -107,7 +116,8 @@ class Test_ModalSchema(unittest.TestCase):
 			---------------------------------------
 			constructs a video and a frame, inserts them via CP 
 		"""
-		client = ModalClient(root=self.data_dir)
+		client = ModalClient(root=data_dir)
+		client.clear_db()
 		video = client.insert(Video, 'test_video', self.video_data, method='cp')
 		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=frame, method='cp')
 

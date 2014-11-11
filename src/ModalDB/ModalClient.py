@@ -50,17 +50,9 @@ class ModalClient(object):
 		"""
 			Connect to MongoDB, load schema, find root path
 		"""
-		#=====[ Step 1: Grab root from envvars	]=====
 		self.root = root
-
-		#=====[ Step 3: Initialize schema	]=====
 		self.initialize_schema(schema)
-
-		#=====[ Step 4: Connect to/initialize MongoDB	]=====
 		self.initialize_mongodb()
-
-		#=====[ Step 5:	Validate the filesystem ]=====
-		self.validate_filesystem()
 
 
 
@@ -82,7 +74,7 @@ class ModalClient(object):
 		if not schema is None:
 			self.schema = schema
 		else:
-			self.load_schema()
+			self.schema = self.load_schema()
 
 	def load_schema(self):
 		if not os.path.exists(self.schema_path):
@@ -122,7 +114,7 @@ class ModalClient(object):
 
 			#=====[ Collections	]=====
 			if not datatype.__name__ in self.db.collection_names():
-				self.db.create_collection(root_type.__name__)
+				self.db.create_collection(datatype.__name__)
 
 			#=====[ Dirs	]=====
 			if self.is_root_type(datatype):
@@ -133,11 +125,12 @@ class ModalClient(object):
 
 	def clear_db(self):
 		"""
-			erases all info that already exists in the db 
+			drops old database and creates a new one
 		"""
 		for db_name in self.mongo_client.database_names():
 			if not db_name in ['admin', 'local']:
 				self.mongo_client.drop_database(db_name)
+		self.db = self.mongo_client.ModalDB
 
 
 
@@ -147,7 +140,7 @@ class ModalClient(object):
 	####################################################################################################
 
 	def get_datatypes(self):
-		return self.schema.keys()
+		return set(self.schema.keys())
 
 	def is_valid_datatype(self, datatype):
 		return datatype in self.get_datatypes()
@@ -157,14 +150,14 @@ class ModalClient(object):
 		if not 'contains' in self.schema[datatype]:
 			return set([])
 		else:
-			return self.schema[datatype]['contains']
+			return set(self.schema[datatype]['contains'])
 
 	def is_leaf_type(self, datatype):
 		return len(self.get_children_datatypes(datatype)) == 0
 
-	def get_root_types(self, datatype):
-		datatypes = self.get_datatypes()
-		return datatypes.difference(set.union(*[self.get_children_datatypes(d) for d in datatypes()]))
+	def get_root_types(self):
+		ds = self.get_datatypes()
+		return ds.difference(set.union(*[self.get_children_datatypes(d) for d in ds]))
 
 	def is_root_type(self, datatype):
 		return datatype in self.get_root_types()
@@ -195,18 +188,18 @@ class ModalClient(object):
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
 
-	def get_disk_items(datatype, item_data):
+	def get_disk_items(self, datatype, item_data):
 		"""
 			returns portion of item_data describing disk items 
 		"""
-		return {k:v for k,v in item_data.items() if self.get_schema(datatype)['items'][k]['mode'] == 'disk'}
+		return {k:v for k,v in item_data.items() if self.get_schema(datatype)[k]['mode'] == 'disk'}
 
 
-	def get_memory_items(datatype, item_data):
+	def get_memory_items(self, datatype, item_data):
 		"""
 			returns portion of item_data describing memory items 
 		"""
-		return {k:v for k,v in item_data.items() if self.get_schema(datatype)['items'][k]['mode'] == 'memory'}
+		return {k:v for k,v in item_data.items() if self.get_schema(datatype)[k]['mode'] == 'memory'}
 
 
 	def create_object_dir(self, datatype, root, item_data, method):
@@ -216,7 +209,7 @@ class ModalClient(object):
 		"""
 		#=====[ Step 1: create root directory	]=====
 		if os.path.exists(root):
-			os.path.remove(root)
+			shutil.rmtree(root)
 		os.mkdir(root)
 
 		#=====[ Step 2: create subdirectories for children	]=====
@@ -230,8 +223,8 @@ class ModalClient(object):
 		disk_items = self.get_disk_items(datatype, item_data)
 
 		#=====[ Step 4: copy items	]=====
-		for name,old_path in disk_items.items():
-			filename = schema['items'][name]['filename']
+		for key,old_path in disk_items.items():
+			filename = schema[key]['filename']
 			new_path = os.path.join(root, filename)
 
 			#=====[ Case: cp	]=====
@@ -264,8 +257,8 @@ class ModalClient(object):
 		mongo_doc['items'] = {}
 		for k in disk_items.keys():
 			mongo_doc['items'][k] = {'present':None}
-		for k,v in memory_items.values():
-			mongo_doc['items'][k] = {'present':True, 'data':item_data}
+		for k,v in memory_items.items():
+			mongo_doc['items'][k] = {'present':True, 'data':item_data[k]}
 
 		#=====[ Step 4: mongo_doc['children']	]=====
 		children = self.get_children_datatypes(datatype)
@@ -308,8 +301,8 @@ class ModalClient(object):
 		assert type(item_data) == dict 
 		schema = self.get_schema(datatype)
 		for k, v in item_data.items():
-			assert k in schema['items']
-			if schema['items'][k]['mode'] == 'disk':
+			assert k in schema
+			if schema[k]['mode'] == 'disk':
 				assert os.path.exists(v)
 
 		#=====[ Step 3: get root directory	]=====
@@ -323,7 +316,7 @@ class ModalClient(object):
 		self.create_object_dir(datatype, root, item_data, method)
 
 		#=====[ Step 5: create + insert mongo doc	]=====
-		mongo_doc = self.create_mongo_doc(data_type, _id, root, )
+		mongo_doc = self.create_mongo_doc(datatype, _id, root, item_data)
 		self.get_collection(datatype).insert(mongo_doc)
 
 		#=====[ Step 6: add to parent, if necessary	]=====
@@ -331,7 +324,9 @@ class ModalClient(object):
 			parent.add_child(datatype, _id)
 
 		#=====[ Step 7: create and return datatype	]=====
-		return datatype(mongo_doc, self.schema[dataype])
+		# pprint(mongo_doc)
+		pprint(schema)
+		return datatype(mongo_doc, schema)
 
 
 

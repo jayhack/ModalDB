@@ -7,5 +7,9 @@ data/*
 bin/data_temp
 test.py
 configure.sh
+tests/data_ModalClient/db/*
+tests/data_ModalClient/image.png
+tests/data_ModalClient/thumbnail.png
+tests/data_ModalClient/Video/*
 
 
