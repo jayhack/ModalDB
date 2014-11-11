@@ -49,6 +49,12 @@ class Test_ModalSchema(unittest.TestCase):
 		shutil.copy(self.thumbnail_backup_path, self.thumbnail_path)
 		shutil.copy(self.image_backup_path, self.image_path)
 
+	def reset_filesystem(self):
+		shutil.rmtree(os.path.join(data_dir, 'Video'))
+
+	def reset(self):
+		self.reset_images()
+		self.reset_filesystem()
 
 	def setUp(self):
 
@@ -116,6 +122,7 @@ class Test_ModalSchema(unittest.TestCase):
 			---------------------------------------
 			constructs a video and a frame, inserts them via CP 
 		"""
+		self.reset()
 		client = ModalClient(root=data_dir)
 		client.clear_db()
 		video = client.insert(Video, 'test_video', self.video_data, method='cp')
@@ -132,6 +139,29 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
 		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
+
+	def test_insertion_mv(self):
+		"""
+			BASIC INSERTION OF VIDEO AND FRAME (MV)
+			---------------------------------------
+			constructs a video and a frame, inserts them via MV
+		"""
+		self.reset()
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+		video = client.insert(Video, 'test_video', self.video_data, method='mv')
+		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='mv')
+
+		self.assertEqual(type(video), Video)
+		self.assertEqual(type(frame), Frame)
+
+		self.assertTrue(os.path.exists(os.path.join(data_dir, 'Video/test_video/Frame/test_frame/image.png')))
+		self.assertTrue(os.path.exists(os.path.join(data_dir, 'Video/test_video/thumbnail.png')))
+
+		self.assertEqual(video['summary'], 'hello, world!')
+		self.assertEqual(frame['subtitles'], 'hello, world!')
+		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
+		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
 
 	
