@@ -53,6 +53,11 @@ class DiskDict(dict):
 		return key in self.keys
 
 
+	def detect_keyerror(self, key):
+		if not key in self:
+			raise KeyError("No such disk item in schema: %s" % key)
+
+
 	def load_item(self, key):
 		"""
 			loads the specified item 
@@ -67,33 +72,35 @@ class DiskDict(dict):
 		"""
 		assert key in self
 		assert not self.save_funcs[key] is None
-		self.save_funcs[key](self.paths[key])
+		self.save_funcs[key](self.data[key], self.paths[key])
 
 
 	def __getitem__(self, key):
-
-		#=====[ Step 1: detect key errors	]=====
-		if not key in self:
-			raise KeyError("No such item in schema: %s" % key)
-
-		#=====[ Step 2: load if necessary ]=====
+		"""
+			returns named item; loads from disk if necessary
+		"""
+		self.detect_keyerror(key)
 		if self.data[key] is None:
 			self.load_item(key)
-
 		return self.data[key]
 
 
-	def __setitem__(self, key):
+	def __setitem__(self, key, value):
+		"""
+			sets named item; saves to disk immediately
+		"""
+		self.detect_keyerror(key)
+		self.data[key] = value
+		self.save_item(key)
 
-		#=====[ Step 1: detect key errors	]=====
-		if not key in self:
-			raise KeyError("No such item in schema: %s" % key)
 
-		#=====[ Step 2: load if necessary ]=====
-		if self.data[key] is None:
-			self.load_item(key)
-
-		return self.data[k]
+	def __delitem__(self, key):
+		"""
+			deletes item both from memory and disk 
+		"""
+		self.detect_keyerror(key)
+		del self.data[key]
+		os.remove(self.paths[key])
 
 
 

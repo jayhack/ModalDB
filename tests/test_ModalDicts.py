@@ -16,7 +16,9 @@ jhack@stanford.edu
 ##################
 '''
 import os
-import unittest 
+import shutil
+
+import unittest
 import nose
 from copy import copy, deepcopy
 from nose.tools import *
@@ -45,7 +47,7 @@ class Test_ModalSchema(unittest.TestCase):
 													'mode':'disk',
 													'filename':'image.png',
 													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p: imsave(x, p)
+													'save_func':lambda x, p: imsave(p, x)
 												},	
 									},
 							Video: {
@@ -64,6 +66,9 @@ class Test_ModalSchema(unittest.TestCase):
 											}
 								}
 					}
+		self.image_path = os.path.join(self.root, 'image.png')
+		self.image_backup_path = os.path.join(self.root, 'image.backup.png')
+		shutil.copy(self.image_backup_path, self.image_path)
 
 
 
@@ -87,12 +92,39 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 			BASIC GETITEM TEST
 			------------------
-			merely constructs a ModalSchema
+			gets the image and confirms that it loaded correctly
 		"""
 		d = DiskDict(self.mongo_doc, self.schema_ex[Frame])
 		img = d['image']
 		self.assertEqual(img.shape, (512, 512, 3))
 
+
+	def test_setitem_diskdict(self):
+		"""
+			BASIC SETITEM TEST
+			------------------
+			gets the image, deletes it from disk, then saves it 
+			and confirms that it saved correctly
+		"""
+		d = DiskDict(self.mongo_doc, self.schema_ex[Frame])
+		img = d['image']
+		os.remove(self.image_path)
+		d['image'] = img
+		self.assertTrue(os.path.exists(self.image_path))
+
+
+	def test_delitem_diskdict(self):
+		"""
+			BASIC DELITEM TEST
+			------------------
+			removes image, then replaces it 
+		"""
+		d = DiskDict(self.mongo_doc, self.schema_ex[Frame])
+		img = d['image']
+		del d['image']
+		self.assertTrue(not os.path.exists(self.image_path))
+		d['image'] = img
+		self.assertTrue(os.path.exists(self.image_path))
 
 
 
