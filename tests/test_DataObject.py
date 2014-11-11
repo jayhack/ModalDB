@@ -33,11 +33,27 @@ class Test_DataObject(unittest.TestCase):
 	####################[ setUp	]###################################################
 	################################################################################
 
+	root = os.path.join(os.path.split(__file__)[0], 'data_ModalDicts')
+	image_path = os.path.join(root, 'image.png')
+	image_backup_path = os.path.join(root, 'image.backup.png')
+
+	def reset_image(self):
+		shutil.copy(self.image_backup_path, self.image_path)
+
+	def image_exists(self):
+		return os.path.exists(self.image_path)
+
+	def remove_image(self):
+		if self.image_exists():
+			os.remove(self.image_path)
+
 	def setUp(self):
 		"""
 			creates basic schema 
 		"""
-		self.root = os.path.join(os.path.split(__file__)[0], 'data_ModalDicts')
+		self.reset_image()
+
+		#=====[ Step 2: Schema 	]=====
 		self.schema_ex = {
 							'Nesting':[Video, Frame],
 
@@ -66,6 +82,7 @@ class Test_DataObject(unittest.TestCase):
 								}
 						}
 
+		#=====[ Step 3: Mongo Doc	]=====
 		self.mongo_doc = {	
 							'_id':'12345',
 							'root':self.root,
@@ -79,14 +96,10 @@ class Test_DataObject(unittest.TestCase):
 												}
 									}
 						}
-					
-		self.image_path = os.path.join(self.root, 'image.png')
-		self.image_backup_path = os.path.join(self.root, 'image.backup.png')
-		shutil.copy(self.image_backup_path, self.image_path)
 
 
-
-
+	def tearDown(self):
+		self.remove_image()
 
 
 	################################################################################
@@ -108,6 +121,7 @@ class Test_DataObject(unittest.TestCase):
 			-------------
 			gets image and subtitles
 		"""
+		self.reset_image()
 		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		self.assertEqual(d['image'].shape, (512, 512, 3))
 		self.assertEqual(d['subtitles'], 'hello, world!')
@@ -119,16 +133,17 @@ class Test_DataObject(unittest.TestCase):
 			------------------
 			gets image and subtitles
 		"""
+		self.reset_image()
 		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 
 		img = d['image']
 		sub = d['subtitles']
 
-		os.remove(self.image_path)
+		self.remove_image()
 		d['image'] = img
 		d['subtitles'] = 'konnichiwa, sekai!'
 
-		self.assertTrue(os.path.exists(self.image_path))
+		self.assertTrue(self.image_exists())
 		self.assertEqual(d['image'].shape, (512, 512, 3))
 		self.assertEqual(d['subtitles'], 'konnichiwa, sekai!')
 
@@ -139,13 +154,14 @@ class Test_DataObject(unittest.TestCase):
 			------------------
 			removes both, makes sure it works
 		"""
+		self.reset_image()
 		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame])
 		
 		del d['image']
 		del d['subtitles']
 
 		self.assertTrue(d['image'] is None)
-		self.assertTrue(not os.path.exists(self.image_path))
+		self.assertTrue(not self.image_exists())
 		self.assertTrue(d['subtitles'] is None)
 
 
@@ -155,6 +171,7 @@ class Test_DataObject(unittest.TestCase):
 			-------------------------------
 			checks on items present, absent, etc.
 		"""
+		self.reset_image()
 		mongo_doc = deepcopy(self.mongo_doc)
 		d = DataObject(mongo_doc, self.schema_ex[Frame])
 
