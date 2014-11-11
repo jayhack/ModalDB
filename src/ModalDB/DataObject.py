@@ -69,12 +69,14 @@ class DataObject(object):
 		"""
 		self.id = mongo_doc['_id']
 		self.root = mongo_doc['root']
-		self.children = mongo_doc['children']
 		self.schema = schema
 		self.items = {
 						'disk':DiskDict(mongo_doc, self.schema),
 						'memory':MemoryDict(mongo_doc, self.schema)
 					}
+		if 'children' in mongo_doc:
+			self.children = mongo_doc['children']
+
 
 
 
@@ -148,18 +150,18 @@ class DataObject(object):
 	################################################################################
 
 	def child_types(self):
-		return self.schema['contains'].keys()
+		return set(self.schema['contains'])
 
 	def is_child_type(self, datatype):
-		return datatype.__name__ in self.child_types()
+		return datatype in self.child_types()
 
 	def get_children_ids(self, datatype):
 		assert self.is_child_type(datatype)
 		return self.children[datatype.__name__]
 
-	def get_children_dir(self, datatype):
+	def get_child_dir(self, datatype):
 		assert self.is_child_type(datatype)
-		return os.path.join(datatype, datatype.__name__)
+		return os.path.join(self.root, datatype.__name__)
 
 	def add_child(self, datatype, _id):
 		assert self.is_child_type(datatype)
