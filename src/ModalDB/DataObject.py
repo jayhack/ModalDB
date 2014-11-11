@@ -69,7 +69,7 @@ class DataObject(object):
 		"""
 		self.id = mongo_doc['_id']
 		self.root = mongo_doc['root']
-		# self.children = mongo_doc['children']
+		self.children = mongo_doc['children']
 		self.schema = schema
 		self.items = {
 						'disk':DiskDict(mongo_doc, self.schema),
@@ -147,133 +147,34 @@ class DataObject(object):
 	####################[ CHILDREN	]###############################################
 	################################################################################
 
-	def is_root_type(self):
-		"""
-			returns true if this datatype is a root type
-			(has no parent)
-		"""
-		index = nesting.index(type(self))
-		return index == 0
+	def child_types(self):
+		return self.schema['contains'].keys()
 
+	def is_child_type(self, datatype):
+		return datatype.__name__ in self.child_types()
 
-	def is_leaf_type(self):
-		"""
-			returns true if this datatype is a leaf type 
-			(has no children)
-		"""
-		index = nesting.index(type(self))
-		return index == len(nesting) - 1
+	def get_children_ids(self, datatype):
+		assert self.is_child_type(datatype)
+		return self.children[datatype.__name__]
 
+	def get_children_dir(self, datatype):
+		assert self.is_child_type(datatype)
+		return os.path.join(datatype, datatype.__name__)
 
-	def get_child_type(self):
-		"""
-			returns child's type 
-		"""
-		self_index = self.nesting.index(type(self))
-		if self_index == len(self.nesting) - 1:
-			return None 
-		else:
-			return self.nesting[self_index + 1]
+	def add_child(self, datatype, _id):
+		assert self.is_child_type(datatype)
+		self.get_children_ids(datatype).append(_id)
 
-
-	def get_children_dir(self):
-		"""
-			returns path to directory where children reside 
-			None if children don't exist
-		"""
-		child_type = self.get_child_type()
-		if child_type:
-			return os.path.join(self.root, child_type.__name__)
-		else:
-			return None
-
-
-	def get_child(self, _id):
-		"""
-			returns the named child, returning none if it doesn't exist
-		"""
-		if not _id in self.children:
-			return None
-		else:
-			return self.get_child_type()(chilrden[_id], self.nesting)
-
+	def get_child(self, datatype, _id):
+		assert self.is_child_type(datatype)
+		raise NotImplementedError
 
 	def iter_children(self):
-		"""
-			iterates through all children as data objects 
-		"""
-		if 'children' in self.mongo_doc:
-			for k in self.children:
-				yield k
-		else:
-			return 
-			yield
-
-
-	def add_child(self, _id):
-		"""
-			creates a mongodb document representing a given data type 
-		"""
-		child_type = self.get_child_type()
-		schema = self.client.schema.schema_dict[child_type]
-		mongo_doc = {}
-
-		#=====[ Step 1: make mongo_doc	]=====
-		mongo_doc['root'] = os.path.join(self.root, child_type.__name__, _id)
-		mongo_doc['_id'] = _id
-		mongo_doc['items'] = deepcopy(schema)
-		for item in mongo_doc['items'].values():
-			if 'load_func' in item:
-				item['load_func'] = pickle.dumps(item['load_func'])
-			if 'save_func' in item:
-				item['save_func'] = pickle.dumps(item['save_func'])
-		for v in mongo_doc['items'].values():
-			v['exists'] = False
-		if not self.client.is_leaf_type(child_type):
-			mongo_doc['children'] = []
-
-		#=====[ Step 2: insert it into children	]=====
-		self.children.append(mongo_doc)
-
-		#=====[ Step 3: make object 	]=====
-		child = child_type(mongo_doc, self.client)
-		child.update()
+		raise NotImplementedError
 
 
 
-	################################################################################
-	####################[ Filesystem	]###########################################
-	################################################################################
 
-	def update(self):
-		"""
-			checks own filesystem in order to update
-			mongo_doc
-		"""
-		#=====[ Step 1: check root	]=====
-		if not os.path.isdir(self.root):
-			os.mkdir(self.root)
-
-		#=====[ Step 2: for each item, update...	]=====
-		for k in self.disk_dict.keys():
-			self.items[k]['exists'] = self.disk_item_exists(k)
-
-		#=====[ Step 3: iterate on children	]=====
-		child_type = self.get_child_type()
-		if child_type:
-
-			#=====[ Step 3.1: make directory for children	]=====
-			if not os.path.isdir(self.get_children_dir()):
-				os.mkdir(self.get_children_dir())
-
-			#=====[ Step 3.2: add child if necessary	]=====
-			for c_id in [x for x in os.listdir(self.get_children_dir()) if not x.startswith('.')]:
-				if self.get_child(c_id) is None:
-					self.add_child(c_id)
-
-			#=====[ Step 3.3: call same for each child	]=====
-			for child in self.iter_children():
-				child.update()
 
 
 
