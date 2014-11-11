@@ -128,10 +128,12 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 		d = DiskDict(deepcopy(self.mongo_dict), self.schema_ex[Frame])
 		img = d['image']
+
 		del d['image']
 		self.assertTrue(not os.path.exists(self.image_path))
-		d['image'] = img
-		self.assertTrue(os.path.exists(self.image_path))
+		self.assertEqual(d['image'], None)
+		shutil.copy(self.image_backup_path, self.image_path)
+
 
 
 

@@ -137,6 +137,13 @@ class DiskDict(ModalDict):
 		self.data 		= {k:None for k in self.keys}
 
 
+	def item_exists(self, key):
+		"""
+			returns true if the item exists on disk 
+		"""
+		return os.path.exists(self.paths[key])
+
+
 	def load_item(self, key):
 		"""
 			loads the specified item 
@@ -158,7 +165,7 @@ class DiskDict(ModalDict):
 		"""
 			returns named item; loads from disk if necessary
 		"""
-		if self.data[key] is None:
+		if self.data[key] is None and self.item_exists(key):
 			self.load_item(key)
 		return self.data[key]
 

@@ -37,13 +37,15 @@ import os
 import dill as pickle
 from copy import deepcopy
 
+from ModalDicts import DiskDict, MemoryDict
+
 class DataObject(object):
 	"""
 		Example Usage:
 		--------------
 
 			# Create DataObject (should be subclassed...)
-			data_object = DataObject(mongo_doc, client)
+			data_object = DataObject(mongo_doc, schema)
 
 			# Access items on disk and in memory identically
 			disk_item = data_object[disk_item_name] # loads from disk
@@ -64,209 +66,61 @@ class DataObject(object):
 		Maybe try having multiple different dicts, like self.items[mode_name]['x']
 		hmm... so mongo_doc doesn't get confused
 	"""
-	def __init__(self, mongo_doc, client):
+	def __init__(self, mongo_doc, schema):
 		"""
 			Args:
 			-----
 			- mongo_doc: dict containing root, in-memory items
 			- client: reference to ModalClient object
 		"""
-		self.mongo_doc = mongo_doc
-		self.items = self.get_items()
-		self.items = self.get_disk_dict(self.mongo_doc)
-		self.client = client
-
-
-
-	################################################################################
-	####################[ ITEMS: control disk access	]###########################
-	################################################################################
-	"""
-		self.items:
-		-----------
-		self.items[mode][key] returns the desired item
-		constructed from self.mongo_doc
-	"""
-
-	def get_memory_items(self, mongo_doc):
-		"""
-			constructs dict mapping memory item keys to values
-		"""
-		raise NotImplementedError
-
-
-	def get_disk_items(self, mongo_doc):
-		"""
-			constructs and returns self.items['disk'] from mongo_doc
-		"""
-		raise NotImplementedError
-
-
-	def get_dynamic_items(self, mongo_doc):
-		"""
-			constructs and returns self.items['dynamic'] from mongo_doc
-		"""
-		raise NotImplementedError
-
-
-	def get_items(self, mongo_doc):
-		"""
-			constructs self.items, a dict of the following form:
-				self.items: {storage modes} -> {dicts containing items of that mode}
-		"""
-		self.items = 	{
-							'memory':self.get_memory_items(self.mongo_doc),
-							'disk':self.get_disk_items(self.mongo_doc),
-							'dynamic':self.get_dynamic_items(self.mongo_doc)
-						}	
+		self.id = mongo_doc['_id']
+		self.root = mongo_doc['root']
+		self.schema = schema
+		self.items = {
+						'disk':DiskDict(mongo_doc, self.schema),
+						'memory':MemoryDict(mongo_doc, self.schema)
+					}
 
 
 	################################################################################
-	####################[ Properties	]###########################################
+	####################[ ITEM ACCESS	]###########################################
 	################################################################################
 
-	@property
-	def root(self):
-		"""
-			path to this data object's root in filesystem
-		"""
-		return self.mongo_doc['root']
-	@root.setter
-	def root(self, value):
-		self.mongo_doc['root'] = value
+	def __contains__(self, key):
+		return any([key in d for d in self.items.values()])
 
 
-	@property
-	def id(self):
-		"""
-			this data object's name
-		"""
-		return self.mongo_doc['_id']
-	@id.setter
-	def id(self, value):
-		self.mongo_doc['_id'] = value
+	def detect_keyerror(self, key):
+		if not key in self:
+			raise KeyError("No such item: %s" % key)
 
 
-	@property
-	def items(self):
-		"""
-			dict mapping item name to it description and, possibly, contents 
-		"""
-		return self.mongo_doc['items']
-	@items.setter
-	def items(self, value):
-		self.mongo_doc['items'] = value
+	def get_mode(self, key):
+		return self.schema[key]['mode']
 
-	
-	@property
-	def children(self):
-		"""
-			dict containing all of this item's children 
-		"""
-		return self.mongo_doc['children']
-	@children.setter
-	def children(self, value):
-		self.mongo_doc['children'] = value
-	
-
-
-	def __contains__(self, name):
-		"""
-			allows for easy lookup of wether data object has this 
-		"""
-		return name in self.items
-
-
-
-
-
-
-	################################################################################
-	####################[ Disk items	]###########################################
-	################################################################################
-
-	def get_disk_dict(self, mongo_doc):
-		"""
-			given a mongo_doc, returns a dict mapping disk-items to None
-		"""
-		return {k:None for k,v in self.items.items() if v['mode'] == 'disk'}
-
-
-	def get_path(self, key):
-		"""
-			returns path to file storing item named by key 
-		"""
-		return os.path.join(self.root, self.items[key]['filename'])
-
-
-	def disk_item_exists(self, key):
-		"""
-			returns true if the item exists on disk 
-		"""
-		return os.path.exists(self.get_path(key))
-
-
-	def load_disk_item(self, key):
-		"""
-			Loads item named by key
-		"""
-		self.disk_dict[key] = self.items[key]['load_func'](self.get_path(key))
-
-
-	def save_disk_item(self, key):
-		"""
-			Saves item named by key
-		"""
-		assert not self.disk_dict[key] is None
-		assert not self.items[key]['save_func'] is None
-		self.items[key]['save_func'](self.disk_dict[key], self.get_path(key))
-
-
-
-
-	################################################################################
-	####################[ Accessing items	]#######################################
-	################################################################################
 
 	def __getitem__(self, key):
-
-		#=====[ Case: nonexistant item	]=====
-		if not key in self:
-			raise AttributeError('No such item: %s' % key)
-
-		#=====[ Case: on-disk item	]=====
-		elif self.items[key][mode] == 'disk':
-			if self.disk_dict[key] is None:
-				self.load_disk_item(key)
-			return self.disk_dict[key]
-
-		#=====[ Case: in-memory item ]=====
-		elif self.items[key][mode] == 'memory':
-			#####[ TODO: get items from memory	]#####
-			raise NotImplementedError
+		self.detect_keyerror(key)
+		return self.items[self.get_mode(key)][key]
 
 
 	def __setitem__(self, key, value):
-		
-		#=====[ Case: nonexistant item	]=====
-		if not key in self:
-			raise AttributeError('No such item: %s' % key)
+		self.detect_keyerror(key)
+		self.items[self.get_mode(key)][key] = value
 
-		#=====[ Case: in-memory item	]=====
-		elif self.items[key][mode] == 'memory':
-			#####[ TODO: set items in memory	]#####
-			raise NotImplementedError
 
-		#=====[ Case: on-disk item	]=====
-		else:
-			self.disk_dict[key] = value
-			self.save_disk_item(key)
+	def __delitem__(self, key):
+		self.detect_keyerror(key)
+		del self.items[self.get_mode(key)][key]
+
+
+
 
 
 
 
 	################################################################################
-	####################[ Children	]###############################################
+	####################[ CHILDREN	]###############################################
 	################################################################################
 
 	def is_root_type(self):
