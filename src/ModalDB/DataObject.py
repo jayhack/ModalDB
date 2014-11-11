@@ -51,6 +51,14 @@ class DataObject(object):
 			disk_item = data_object[disk_item_name] # loads from disk
 			mem_item = data_object[mem_item_name] # grabs from MongoDB
 
+		mongo_doc:
+		----------
+		contains:
+			- _id: self identifier 
+			- root: path to this object's directory
+			- children: mapping from child type to children
+			- items: metadata on contained items (exists, etc.)
+
 	"""
 	def __init__(self, mongo_doc, schema):
 		"""
@@ -61,11 +69,13 @@ class DataObject(object):
 		"""
 		self.id = mongo_doc['_id']
 		self.root = mongo_doc['root']
+		# self.children = mongo_doc['children']
 		self.schema = schema
 		self.items = {
 						'disk':DiskDict(mongo_doc, self.schema),
 						'memory':MemoryDict(mongo_doc, self.schema)
 					}
+
 
 
 
@@ -103,6 +113,33 @@ class DataObject(object):
 
 
 
+
+	################################################################################
+	####################[ ITEM METADATA ]###########################################
+	################################################################################
+
+	def update_item_metadata(self):
+		"""
+			updates self.mongo_doc to reflect current state
+			(i.e. which items are present)
+		"""
+		for modal_dict in self.items.values():
+			modal_dict.update_item_metadata()
+
+
+	def present_items(self):
+		"""
+			returns set of names of items that are present
+		"""
+		return set.union(*[md.present_items() for md in self.items.values()])
+
+
+	def absent_items(self):
+		"""
+			returns set of names of items that are in schema 
+			yet not present 
+		"""
+		return set.union(*[md.absent_items() for md in self.items.values()])
 
 
 

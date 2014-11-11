@@ -30,11 +30,43 @@ class ModalDict(object):
 
 	def __init__(self, mongo_doc, datatype_schema):
 		"""
-			gets self.keys and self.metadata
+			initializes self.keys, self.metadata, self.data
 		"""
 		assert not self.mode is None
-		self.keys = set([k for k,v in datatype_schema.items() if v['mode'] == self.mode])
-		self.metadata = {k:mongo_doc['items'][k] for k in self.keys}
+		self.mongo_doc 	= mongo_doc
+		self.keys 		= set([k for k,v in datatype_schema.items() if v['mode'] == self.mode])
+		self.metadata 	= {k:mongo_doc['items'][k] for k in self.keys}
+		self.data 		= {k:None for k in self.keys}
+
+
+	def update_item_metadata(self):
+		"""
+			updates metadata on items. Override
+		"""
+		for k in self.keys:
+			self.metadata[k]['present'] = self.item_present(k)
+
+
+	def item_present(self, key):
+		"""
+			returns true if the named item present. Override.
+		"""
+		raise NotImplementedError
+
+
+	def present_items(self):
+		"""
+			returns names of items that are present.
+		"""
+		self.update_item_metadata()
+		return set([k for k in self.keys if self.metadata[k]['present']])
+
+
+	def absent_items(self):
+		"""
+			returns set of items that are not present.
+		"""
+		return self.keys.difference(self.present_items())
 
 
 	def __contains__(self, key):
@@ -57,6 +89,7 @@ class ModalDict(object):
 
 	def __setitem__(self, key, value):
 		self.detect_keyerror(key)
+		self.metadata[key]['present'] = True
 		return self.set_item(key, value)
 
 
@@ -66,11 +99,14 @@ class ModalDict(object):
 
 	def __delitem__(self, key):
 		self.detect_keyerror(key)
+		self.metadata[key]['present'] = False
 		self.del_item(key)
 
 
 	def del_item(self, key):
 		raise NotImplementedError
+
+
 
 
 
@@ -91,6 +127,11 @@ class MemoryDict(ModalDict):
 	def __init__(self, mongo_doc, datatype_schema):
 		super(MemoryDict, self).__init__(mongo_doc, datatype_schema)
 		self.data = {k:mongo_doc['items'][k]['data'] for k in self.keys}
+		self.update_item_metadata()
+
+
+	def item_present(self, key):
+		return not self[key] is None
 
 
 	def get_item(self, key):
@@ -103,9 +144,6 @@ class MemoryDict(ModalDict):
 
 
 	def del_item(self, key):
-		"""
-			sets self.data[key] to None
-		"""
 		self.data[key] = None
 
 
@@ -135,10 +173,12 @@ class DiskDict(ModalDict):
 		self.paths 		= {k:os.path.join(root, items[k]['filename']) for k in self.keys}
 		self.data 		= {k:None for k in self.keys}
 
+		self.update_item_metadata()
 
-	def item_exists(self, key):
+
+	def item_present(self, key):
 		"""
-			returns true if the item exists on disk 
+			returns true if the item present on disk 
 		"""
 		return os.path.exists(self.paths[key])
 
@@ -164,7 +204,7 @@ class DiskDict(ModalDict):
 		"""
 			returns named item; loads from disk if necessary
 		"""
-		if self.data[key] is None and self.item_exists(key):
+		if self.data[key] is None and self.item_present(key):
 			self.load_item(key)
 		return self.data[key]
 
