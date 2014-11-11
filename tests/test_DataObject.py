@@ -27,6 +27,8 @@ from scipy.misc import imsave, imread
 from ModalDB.DataObject import DataObject
 from ModalDB import Video, Frame
 
+from schema_example import schema_ex
+
 class Test_DataObject(unittest.TestCase):
 
 	################################################################################
@@ -54,33 +56,7 @@ class Test_DataObject(unittest.TestCase):
 		self.reset_image()
 
 		#=====[ Step 2: Schema 	]=====
-		self.schema_ex = {
-							'Nesting':[Video, Frame],
-
-							Frame: {
-									'image':{
-													'mode':'disk',
-													'filename':'image.png',
-													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p: imsave(p, x)
-											},
-									'subtitles':{
-													'mode':'memory'
-												}
-									},
-							Video: {
-
-									'description':{
-													'mode':'memory'
-												},
-									'thumbnail':{
-													'mode':'disk',
-													'filename':'thumbnail.png',
-													'load_func':lambda p: imread(p),
-													'save_func':lambda x, p:imsave(p, x)
-												}
-								}
-						}
+		self.schema_ex = schema_ex
 
 		#=====[ Step 3: Mongo Doc	]=====
 		self.mongo_doc = {	

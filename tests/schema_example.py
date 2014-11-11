@@ -1,4 +1,5 @@
 from ModalDB import *
+from scipy.misc import imread, imsave
 
 schema_ex = {
 				Frame: {
