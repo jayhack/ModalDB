@@ -121,6 +121,16 @@ class Test_ModalSchema(unittest.TestCase):
 		video = client.insert(Video, 'test_video', self.video_data, method='cp')
 		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='cp')
 
+		self.assertEqual(type(video), Video)
+		self.assertEqual(type(frame), Frame)
+
+		self.assertTrue(os.path.exists(os.path.join(data_dir, 'Video/test_video/Frame/test_frame/image.png')))
+		self.assertTrue(os.path.exists(os.path.join(data_dir, 'Video/test_video/thumbnail.png')))
+
+		self.assertTrue(video['summary'] == 'hello, world!')
+		self.assertTrue(frame['subtitles'] == 'hello, world!')
+
+
 
 	
 
