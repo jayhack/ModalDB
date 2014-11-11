@@ -15,6 +15,7 @@ jhack@stanford.edu
 ##############
 '''
 import os
+import shutil
 import random
 import dill as pickle
 from copy import copy, deepcopy
@@ -81,13 +82,11 @@ class ModalClient(object):
 		if not schema is None:
 			self.schema = schema
 		else:
-			try:
-				self.schema = self.load_schema()
-			except:
-				raise Exception("You need to specify a schema! (or schema doesn't yet exist) See ModalSchema")
-
+			self.load_schema()
 
 	def load_schema(self):
+		if not os.path.exists(self.schema_path):
+			raise Exception("No schema exists or was specified")
 		return ModalSchema(self.schema_path)
 
 	def save_schema(self):
@@ -106,9 +105,10 @@ class ModalClient(object):
 	######################[ --- MONGODB --- ]###########################################################
 	####################################################################################################
 
+
 	def initialize_mongodb(self):
 		"""
-			sets collections, etc.
+			starts mongodb; ensures proper collections exist;
 		"""
 		#=====[ Step 1: Connect	]=====
 		try:
@@ -118,7 +118,7 @@ class ModalClient(object):
 			raise Exception("Turn on MongoDB.")
 		
 		#=====[ Step 2: Ensure collections exist	]=====
-		for root_type in self.get_root_types():
+		for root_type in self.get_types():
 			if not root_type.__name__ in self.db.collection_names():
 				self.db.create_collection(root_type.__name__)
 
@@ -130,15 +130,6 @@ class ModalClient(object):
 		for db_name in self.mongo_client.database_names():
 			if not db_name in ['admin', 'local']:
 				self.mongo_client.drop_database(db_name)
-
-
-	def fill_mongo_index(self):
-		"""
-			goes through entire data dir and fills in data 
-			directory
-			(assumes no videos are there)
-		"""
-		raise NotImplementedError 
 
 
 	def validate_filesystem(self):
@@ -162,18 +153,35 @@ class ModalClient(object):
 
 
 	####################################################################################################
-	######################[ --- ACCESSING ELEMENTS --- ]################################################
+	######################[ --- GETTING ELEMENTS --- ]##################################################
 	####################################################################################################
 
-	def get_object(self, data_type, _id):
+	def get_datatypes(self):
+		return self.schema.keys()
+
+	def is_valid_datatype(self, datatype):
+		return datatype in self.get_datatypes()
+
+	def get_children_datatypes(self, datatype):
+		assert self.is_valid_datatype(datatype)
+		return self.schema[datatype]['contains']
+
+	def get_collection(self, datatype):
+		return self.db[datatype.__name__]
+
+	def get_schema(self, datatype):
+		return self.schema[datatype]
+
+	def get(self, datatype, _id):
 		"""
-			given a datatype and an _id, returns the requested 
-			datatype 
-			NOTE: data_type must currently be a root type
+			returns object of type datatype and named _id
 		"""
-		assert self.is_root_type(data_type)
-		collection = self.db[data_type.__name__]
-		return data_type(collection.find_one({'_id':_id}), self)
+		assert self.is_valid_datatype(datatype)
+		collection = self.get_collection(datatype).find_one({'_id':_id})
+		schema = self.get_schema(datatype)
+		return datatype(mongo_doc, schema)
+
+
 
 
 
@@ -181,123 +189,123 @@ class ModalClient(object):
 	######################[ --- INSERTING ELEMENTS --- ]################################################
 	####################################################################################################
 
-	def get_datatypes(self):
+	def get_disk_items(datatype, item_data):
 		"""
-			returns set of types of DataObjects accessible in this DB
+			returns portion of item_data describing disk items 
 		"""
-		return self.schema.schema_dict.keys()
+		return {k:v for k,v in item_data.items() if self.get_schema(datatype)['items'][k]['mode'] == 'disk'}
 
 
-	def get_root_types(self):
+	def get_memory_items(datatype, item_data):
 		"""
-			returns set of root types
+			returns portion of item_data describing memory items 
 		"""
-		return set([self.schema.schema_dict['Nesting'][0]])
+		return {k:v for k,v in item_data.items() if self.get_schema(datatype)['items'][k]['mode'] == 'memory'}
 
-	def get_leaf_types(self):
+
+	def create_object_dir(self, datatype, root, item_data, method):
 		"""
-			returns set of leaf types 
+			creates a directory to contain all disk items for this
+			object at root
 		"""
-		return set([self.schema.schema_dict['Nesting'][-1]])
+		#=====[ Step 1: create root directory	]=====
+		if os.path.exists(root):
+			os.path.remove(root)
+		os.mkdir(root)
+
+		#=====[ Step 2: get disk items	]=====
+		schema = self.get_schema(datatype)
+		disk_items = self.get_disk_items(datatype, item_data)
+
+		#=====[ Step 3: copy items	]=====
+		for name,old_path in disk_items.items():
+			filename = schema['items'][name]['filename']
+			new_path = os.path.join(root, filename)
+
+			#=====[ Case: cp	]=====
+			if method == 'cp':
+				shutil.copy2(old_path, new_path)
+			elif method == 'mv':
+				shutil.move(old_path, new_path)
 
 
-	def is_root_type(self, data_type):
+
+	def create_mongo_doc(self, datatype, _id, root, item_data):
 		"""
-			returns true if data_type is a root type 
+			returns doc that can be inserted into a mongodb collection
+			to represent this item.
 		"""
-		return data_type in self.get_root_types()
+		#=====[ Step 1: get disk/memory items	]=====
+		schema = self.get_schema(datatype)
+		disk_items = self.get_disk_items(datatype, item_data)
+		memory_items = self.get_memory_items(datatype, item_data)
+
+		#=====[ Step 2: basic mongo_doc	]=====
+		mongo_doc = {
+						'root':root,
+						'_id':_id,
+					}
+
+		#=====[ Step 3: mongo_doc['items']	]=====
+		mongo_doc['items'] = {}
+		for k in disk_items.keys():
+			mongo_doc['items'][k] = {'present':None}
+		for k,v in memory_items.values():
+			mongo_doc['items'][k] = {'present':True, 'data':item_data}
+
+		#=====[ Step 4: mongo_doc['children']	]=====
+		children_datatypes = self.get_children_datatypes(datatype)
 
 
-	def is_leaf_type(self, data_type):
-		"""
-			returns true if data_type is a leaf type 
-		"""
-		return data_type in self.get_leaf_types()
-
-
-	def get_parent_type(self, data_type):
-		"""
-			returns the parent type, according to self.schema 
-			NOTE: currently assumes that 'Nesting' is a list, where each 
-					element is a type.
-		"""
-		if self.is_root_type(data_type):
-			return None
-		else:
-			return self.schema['Nesting'][self.schema['Nesting'].index(datatype) - 1]
-
-
-	def get_child_type(self, data_type):
-		"""
-			returns the child type, according to self.schema 
-			NOTE: currently assumes that 'Nesting' is a list, where each 
-					element is a type.
-		"""
-		index = self.schema['Nesting'].index(datatype)
-		if index == len(self.schema['Nesting']) - 1:
-			return None 
-		else:
-			return self.schema['Nesting'][index + 1]
-
-
-	def get_datatype_root(self, data_type):
-		"""
-			returns directory for a data_type
-		"""
-		return os.path.join(self.root, data_type.__name__)
-
-
-	def get_root_object_root(self, data_type, _id):
-		"""
-			returns the directory for a root object named _id 
-		"""
-		return os.path.join(self.get_datatype_root(data_type), _id)
-
-
-	def create_mongo_doc(self, data_type, parent, _id):
-		"""
-			creates a mongodb document representing a given data type 
-		"""
-		schema = self.schema.schema_dict[data_type]
-		mongo_doc = {}
-
-		#=====[ Step 1: fill in root	]=====
-		if parent == None:
-			mongo_doc['root'] = self.get_root_object_root(data_type, _id)
-		else:
-			mongo_doc['root'] = os.path.join(parent['root'], data_type.__name__, _id)
-
-		#=====[ Step 2: fill in name	]=====
-		mongo_doc['_id'] = _id
-
-		#=====[ Step 3: fill mongo_doc['items'] ]=====
-		mongo_doc['items'] = deepcopy(schema)
-		#####[ TODO: GET RID OF THIS	]#####
-		for item in mongo_doc['items'].values():
-			if 'load_func' in item:
-				item['load_func'] = pickle.dumps(item['load_func'])
-			if 'save_func' in item:
-				item['save_func'] = pickle.dumps(item['save_func'])
-
-		for v in mongo_doc['items'].values():
-			v['exists'] = False
-
-		#=====[ Step 4: fill mongo_doc['children']	]=====
-		if not self.is_leaf_type(data_type):
-			mongo_doc['children'] = []
 
 		return mongo_doc
 
 
 
-	def insert_object(self, data_type, parent, _id):
+	def insert(self, datatype, _id, item_data, method='cp'):
 		"""
-			inserts objects into the DB 
+			Args:
+			-----
+			- datatype: type of object to create
+			- _id: name of object to create 
+			- item_data: dict containing info on objects
+			- method: (cp or mv) copy or move files 
+
+			item_data details:
+			------------------
+			for memory items: name maps to *contents*
+			for disk items: name maps to *current filepath*
+
+			item_data ex:
+			-------------
+			{
+				'subtitles':'hello, world!',
+				'image':'/path/to/image.png',
+			}
 		"""
-		#####[ TODO: sanitize input	]#####
-		#=====[ Step 2: Create mongo doc	]=====
-		mongo_doc = self.create_mongo_doc(data_type, parent, _id)
-		obj = data_type(mongo_doc, self)
+		#=====[ Step 1: sanitize datatype/_id/method	]=====
+		assert self.is_valid_datatype(datatype)
+		assert type(_id) in [str, unicode]
+		assert method in ['cp', 'mv']
+		
+
+		#=====[ Step 2: sanitize item data	]=====
+		assert type(item_data) == dict 
+		schema = self.get_schema(datatype)
+		for k, v in item_data.items():
+			assert k in schema['items']
+			if schema['items'][k]['mode'] == 'disk':
+				assert os.path.exists(v)
+
+
+		#=====[ Step 3: get root directory	]=====
+		raise NotImplementedError
+
+		#=====[ Step 4: create object dir	]=====
+		self.create_object_dir(datatype, root, item_data, method)
+
+		#=====[ Step 5: create + insert mongo doc	]=====
+		mongo_doc = self.create_mongo_doc(data_type, _id, root, )
 
 		#=====[ Step 3: validate filesystem	]=====
 		if not parent is None:
@@ -318,52 +326,6 @@ class ModalClient(object):
 		d = os.path.join(self.root, root_type.__name__)
 		for _id in [x for x in os.listdir(d) if not x.startswith('.')]:
 			self.insert_object(root_type, None, _id)
-
-
-
-
-	####################################################################################################
-	######################[ --- VIDEO ACCESS --- ]######################################################
-	####################################################################################################	
-
-	def get_video(self, video_name):
-		"""
-			returns the named video (unloaded)
-		""" 
-		root = os.path.join(self.root, video_name)
-		mongo_doc = self.videos.find_one(spec_or_id=video_name)
-		return Video(self.db, mongo_doc, root)
-
-
-	def get_random_video(self):
-		"""
-			returns a random video (unloaded)
-		"""
-		return self.get_video(self.videos.find_one()['_id'])
-
-
-	def iter_videos(self, verbose=False):
-		"""
-			iterates over all videos 
-		"""
-		cursor = self.videos.find()
-		for i in range(cursor.count()):
-			v = self.get_video(cursor.next()['_id'])
-			if verbose:
-				print v
-			yield v
-
-
-	def iter_frames(self, verbose=False, subsample_rate=1):
-		"""
-			iterates over all frames
-			verbose mode prints out the video names as well
-		"""
-		for v in self.iter_videos(verbose=verbose):
-			for f in v.iter_frames(verbose=verbose, subsample_rate=subsample_rate):
-				yield f
-
-
 
 
 
