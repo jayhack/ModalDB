@@ -36,7 +36,7 @@ class Test_ModalSchema(unittest.TestCase):
 		"""
 			creates basic schema 
 		"""
-		self.root = os.path.join(__file__, 'data_ModalDicts')
+		self.root = os.path.join(os.path.split(__file__)[0], 'data_ModalDicts')
 		self.schema_ex = {
 							'Nesting':[Video, Frame],
 
@@ -57,7 +57,7 @@ class Test_ModalSchema(unittest.TestCase):
 						}
 
 		self.mongo_doc = {	
-						'root':os.path.join(self.root, 'data'),
+						'root':self.root,
 						'items':{
 									'image':{
 												'exists':True,
@@ -81,5 +81,18 @@ class Test_ModalSchema(unittest.TestCase):
 			merely constructs a ModalSchema
 		"""
 		d = DiskDict(self.mongo_doc, self.schema_ex[Frame])
+
+
+	def test_getitem_diskdict(self):
+		"""
+			BASIC GETITEM TEST
+			------------------
+			merely constructs a ModalSchema
+		"""
+		d = DiskDict(self.mongo_doc, self.schema_ex[Frame])
+		img = d['image']
+		self.assertEqual(img.shape, (512, 512, 3))
+
+
 
 

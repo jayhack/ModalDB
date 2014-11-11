@@ -77,10 +77,10 @@ class DiskDict(dict):
 			raise KeyError("No such item in schema: %s" % key)
 
 		#=====[ Step 2: load if necessary ]=====
-		if self.data[k] is None:
+		if self.data[key] is None:
 			self.load_item(key)
 
-		return self.data[k]
+		return self.data[key]
 
 
 	def __setitem__(self, key):
@@ -90,7 +90,7 @@ class DiskDict(dict):
 			raise KeyError("No such item in schema: %s" % key)
 
 		#=====[ Step 2: load if necessary ]=====
-		if self.data[k] is None:
+		if self.data[key] is None:
 			self.load_item(key)
 
 		return self.data[k]
