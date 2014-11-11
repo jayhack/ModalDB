@@ -69,7 +69,7 @@ class DataObject(object):
 		"""
 		self.id = mongo_doc['_id']
 		self.root = mongo_doc['root']
-		# self.children = mongo_doc['children']
+		self.children = mongo_doc['children']
 		self.schema = schema
 		self.items = {
 						'disk':DiskDict(mongo_doc, self.schema),
