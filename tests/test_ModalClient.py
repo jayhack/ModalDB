@@ -127,8 +127,10 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertTrue(os.path.exists(os.path.join(data_dir, 'Video/test_video/Frame/test_frame/image.png')))
 		self.assertTrue(os.path.exists(os.path.join(data_dir, 'Video/test_video/thumbnail.png')))
 
-		self.assertTrue(video['summary'] == 'hello, world!')
-		self.assertTrue(frame['subtitles'] == 'hello, world!')
+		self.assertEqual(video['summary'], 'hello, world!')
+		self.assertEqual(frame['subtitles'], 'hello, world!')
+		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
+		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
 
 
