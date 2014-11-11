@@ -7,11 +7,11 @@ Description:
 	
 	Common ancestor of objects that store data both in-memory and 
 	on disk. This is useful for applications in which there are components 
-	that are both very large and very small (i.e. text and associated images)
+	that are both very large and very small (i.e. text, associated images)
 
 	Key properties:
 		- abstracts away details of what items are stored where
-		- loads items on disk lazily
+		- lazily loads items on disk
 
 	Terminology:
 		- item: key, value pair
@@ -42,31 +42,83 @@ class DataObject(object):
 		Example Usage:
 		--------------
 
-			data_object = DataObject(mongo_doc)
-			data_object.set_schema(schema)
+			# Create DataObject (should be subclassed...)
+			data_object = DataObject(mongo_doc, client)
 
+			# Access items on disk and in memory identically
+			disk_item = data_object[disk_item_name] # loads from disk
+			mem_item = data_object[mem_item_name] # grabs from MongoDB
+
+
+		mongo_doc: 
+		----------
+
+			contains record of all items, including:
+				- wether they are present or not (allows for fast search)
+				- their mode of storage
+				- NOT their load-funcs; this is handled in schema
+				- if they are in-memory, contains their actual data
+
+
+
+		Maybe try having multiple different dicts, like self.items[mode_name]['x']
+		hmm... so mongo_doc doesn't get confused
 	"""
 	def __init__(self, mongo_doc, client):
 		"""
-			mongo_doc: contains root, schema, etc.
-
-			{
-				'root':'/path/to/dataobject',
-				'items':{
-							...items...
-						}
-				'_id':'this_id'
-				'children':{
-								...
-							},
-				}
-
+			Args:
+			-----
+			- mongo_doc: dict containing root, in-memory items
+			- client: reference to ModalClient object
 		"""
 		self.mongo_doc = mongo_doc
-		self.disk_dict = self.get_disk_dict(self.mongo_doc)
-		self.nesting = client.schema.schema_dict['Nesting']
+		self.items = self.get_items()
+		self.items = self.get_disk_dict(self.mongo_doc)
 		self.client = client
 
+
+
+	################################################################################
+	####################[ ITEMS: control disk access	]###########################
+	################################################################################
+	"""
+		self.items:
+		-----------
+		self.items[mode][key] returns the desired item
+		constructed from self.mongo_doc
+	"""
+
+	def get_memory_items(self, mongo_doc):
+		"""
+			constructs dict mapping memory item keys to values
+		"""
+		raise NotImplementedError
+
+
+	def get_disk_items(self, mongo_doc):
+		"""
+			constructs and returns self.items['disk'] from mongo_doc
+		"""
+		raise NotImplementedError
+
+
+	def get_dynamic_items(self, mongo_doc):
+		"""
+			constructs and returns self.items['dynamic'] from mongo_doc
+		"""
+		raise NotImplementedError
+
+
+	def get_items(self, mongo_doc):
+		"""
+			constructs self.items, a dict of the following form:
+				self.items: {storage modes} -> {dicts containing items of that mode}
+		"""
+		self.items = 	{
+							'memory':self.get_memory_items(self.mongo_doc),
+							'disk':self.get_disk_items(self.mongo_doc),
+							'dynamic':self.get_dynamic_items(self.mongo_doc)
+						}	
 
 
 	################################################################################
