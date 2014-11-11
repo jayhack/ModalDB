@@ -34,7 +34,7 @@ class ModalDict(object):
 		"""
 		assert not self.mode is None
 		self.mongo_doc 	= mongo_doc
-		self.keys 		= set([k for k,v in datatype_schema.items() if v['mode'] == self.mode])
+		self.keys 		= set([k for k,v in datatype_schema.items() if not k == 'contains' and v['mode'] == self.mode])
 		self.metadata 	= {k:mongo_doc['items'][k] for k in self.keys}
 		self.data 		= {k:None for k in self.keys}
 
