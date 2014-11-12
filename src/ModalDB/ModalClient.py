@@ -227,6 +227,10 @@ class ModalClient(object):
 			filename = schema[key]['filename']
 			new_path = os.path.join(root, filename)
 
+			#=====[ Case: same path	]=====
+			if os.path.samefile(old_path, new_path):
+				continue
+
 			#=====[ Case: cp	]=====
 			if method == 'cp':
 				shutil.copy2(old_path, new_path)
