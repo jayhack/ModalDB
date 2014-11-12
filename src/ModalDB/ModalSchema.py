@@ -180,7 +180,7 @@ class ModalSchema(object):
 				raise TypeError
 
 			#=====[ save_func	]=====
-			if not 'save_func' in item_dict:
+			if not 'save_func' in item_dict or item_dict['save_func'] is None:
 				item_dict['save_func'] = None
 			else:
 				if not inspect.isfunction(item_dict['save_func']):

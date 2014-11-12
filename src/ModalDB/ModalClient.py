@@ -56,8 +56,6 @@ class ModalClient(object):
 
 
 
-
-
 	####################################################################################################
 	######################[ --- SCHEMA --- ]############################################################
 	####################################################################################################
@@ -71,10 +69,14 @@ class ModalClient(object):
 		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
 
 		#=====[ Step 2: Load schema	]=====
-		if not schema is None:
+		if type(schema) == dict:
+			self.schema = ModalSchema(schema)
+		elif type(schema) == ModalSchema:
 			self.schema = schema
-		else:
+		elif schema is None:
 			self.schema = self.load_schema()
+		else:
+			raise Exception("Schema type not recongized. (Should be dict or ModalSchema)")
 
 	def load_schema(self):
 		if not os.path.exists(self.schema_path):
