@@ -320,7 +320,7 @@ class ModalClient(object):
 		#=====[ Step 4: mongo_doc['children']	]=====
 		children = self.get_children_datatypes(datatype)
 		if len(children) > 0:
-			mongo_doc['children'] = {c.__name__:[] for c in children}
+			mongo_doc['children'] = {c.__name__:{} for c in children}
 
 		return mongo_doc
 		

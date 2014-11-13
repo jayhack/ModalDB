@@ -39,6 +39,120 @@ from copy import deepcopy
 
 from ModalDicts import DiskDict, MemoryDict
 
+class ChildContainer(object):
+	"""
+		Class: ChildContainer
+		=====================
+		facilitates interaction with a DataObject's children.
+		wraps around a document stored in MongoDB
+
+		Terminology:
+		------------
+		raw_id: _id of child in isolation, i.e. 'frame_1'
+		full_id: _id of child given its parent, i.e. 'video_1/frame_1'
+
+	"""
+	id_joiner = '/'
+
+	def __init__(self, parent_id, mongo_doc):
+		""""
+			mongo_doc: document containing a DataObject
+		"""
+		self.parent_id = parent_id
+		self.parent_prefix = parent_id + self.id_joiner
+		self.childtype_dicts = mongo_doc['children']
+
+
+
+
+	################################################################################
+	####################[ UTILS	]###################################################
+	################################################################################
+
+	def get_childtypes(self):
+		return self.childtype_dicts.keys()
+
+	def is_valid_childtype(self, datatype):
+		return datatype.__name__ in self.get_childtypes()
+
+	def get_only_childtype(self):
+		if not len(self.get_childtypes) == 1:
+			raise Exception("You need to specify the child's datatype")
+		return self.get_childtypes()[0]
+
+	def is_full_id(self, _id):
+		return _id.startswith(self.parent_prefix)
+
+	def is_raw_id(self, _id):
+		return not self.is_full(_id)
+
+	def to_raw_id(self, _id):
+		_id = str(_id)
+		if self.is_raw_id(_id):
+			return _id[len(self.parent_prefix):]
+		return _id
+
+	def to_full_id(self, _id):
+		_id = str(_id)
+		if self.is_full_id(_id):
+			return self.parent_prefix + _id
+		return _id
+
+	def get_childtype_dict(self, datatype):
+		assert self.is_valid_childtype(datatype)
+		return self.childtype_dicts[datatype.__name__]
+
+
+
+	################################################################################
+	####################[ GET/ADD	]###############################################
+	################################################################################
+
+	def get_child(self, **args):
+		"""
+			Args:
+			-----
+			- (Optional, first): childtype (can omit if there's only one)
+			- id of child; can be either full or raw
+		"""
+		assert len(args) in [1, 2]
+
+		#=====[ Case: only one childtype	]=====
+		if len(args) == 1:
+			return self.get_child(self.get_only_childtype(), args[0])
+
+		#=====[ Case: >= 1 childtypes	]=====
+		elif len(args) == 2:
+			return self.get_childtype_dict(args[0])[self.to_raw_id(args[1])]
+
+
+	def add_child(self, **args):
+		"""
+			Args:
+			-----
+			- (Optional, first): childtype (can omit if there's only one)
+			- id of child; can be either full or raw
+		"""
+		assert len(args) in [1, 2]
+
+		#=====[ Step 1: get childtype, _id	]=====
+		if len(args) == 1:
+			childtype, _id = self.get_only_childtype(), args[0]
+			_id = args[1]
+		elif len(args) == 2:
+			childtype, _id = args[0], args[1]
+
+		#=====[ Step 2: insert 	]=====
+		raw_id, full_id = self.to_raw_id(_id), self.to_full_id(_id)
+		childtype_dict = self.get_childtype_dict(childtype)
+		childtype_dict[raw_id] = full_id
+
+
+
+
+
+
+
 class DataObject(object):
 	"""
 		Example Usage:
@@ -58,6 +172,13 @@ class DataObject(object):
 			- root: path to this object's directory
 			- children: mapping from child type to children
 			- items: metadata on contained items (exists, etc.)
+
+		children:
+		---------
+		children may be identified to their parent differently than they 
+		are globally. For example, the frame '1' in a video 'myvid' is '1'
+		its parent, while it's known as 'myvid/Frame/1' globally.
+
 
 	"""
 	def __init__(self, mongo_doc, schema, client):
@@ -157,9 +278,15 @@ class DataObject(object):
 	def is_child_type(self, datatype):
 		return datatype in self.child_types()
 
+	def get_child_dict(self, datatype):
+		return self.children[datatype.__name__]
+
 	def get_child_ids(self, datatype):
 		assert self.is_child_type(datatype)
-		return self.children[datatype.__name__]
+		return self.get_child_dict(datatype).keys()
+
+	def get_raw_child_id(self, _id):
+		return '/'.split(_id)[-1]
 
 	def get_child_dir(self, datatype):
 		assert self.is_child_type(datatype)
@@ -167,24 +294,25 @@ class DataObject(object):
 
 	def add_child(self, datatype, _id):
 		assert self.is_child_type(datatype)
-		self.get_child_ids(datatype).append(_id)
+		self.get_child_dict(datatype)[self.get_raw_child_id(_id)] = _id
 		out = self.client.get_collection(type(self)).update(
 					{'_id':self._id}, 
 					{'$set':{'children':self.children}},
 					upsert=False
 		)
 
-
-	def get_child(self, datatype, index):
+	def get_child(self, datatype, raw_child_id):
 		"""
 			Grab a child DataObject by *index*
 		"""
 		assert self.is_child_type(datatype)
-		child_ids = self.get_child_ids(datatype)
-		assert index >= 0 and index < len(child_ids)
-		return self.client.get(datatype, child_ids[index])
+		type_children = self.get_child_dict(datatype)
+		raw_child_id = str(raw_child_id)
+		if not raw_child_id in type_children.keys():
+			raise KeyError("No such child exists: %s", raw_child_id)
+		return self.client.get(datatype, type_children[raw_child_id])
 
-	def iter_children(self):
+	def iter_children(self, datatype):
 		for child_id in self.get_child_ids():
 			yield self.get_child(self, datatype)
 
