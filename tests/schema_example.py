@@ -12,7 +12,7 @@ schema_ex = {
 							'subtitles':{
 										'mode':'memory'
 										},
-
+							'contains':[]
 						},
 				Video: {
 

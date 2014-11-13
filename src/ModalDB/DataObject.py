@@ -85,7 +85,7 @@ class DataObject(object):
 						'disk':DiskDict(mongo_doc, self.schema),
 						'memory':MemoryDict(mongo_doc, self.schema)
 					}
-		self.children = ChildContainer(self._id, mongo_doc)
+		self.children = ChildContainer(self._id, schema, mongo_doc)
 
 
 
@@ -159,16 +159,13 @@ class DataObject(object):
 	####################[ CHILDREN	]###############################################
 	################################################################################
 
-	def child_types(self):
-		return set(self.schema['contains'])
-
-	def is_child_type(self, datatype):
-		return datatype in self.child_types()
-
-	def get_children_dir(self, datatype):
-		assert self.is_child_type(datatype)
-		return os.path.join(self.root, datatype.__name__)
-
+	def get_child_dir(self, childtype):
+		"""
+			returns path to directory containing childtype
+		"""
+		assert self.children.is_valid_childtype(childtype)
+		return os.path.join(self.root, childtype.__name__)
+		
 
 	def get_child(self, *args):
 		"""
@@ -194,17 +191,16 @@ class DataObject(object):
 			- (Optional, first): childtype (can omit if there's only one)
 			- id of child; can be either full or raw
 		"""
-		assert self.is_child_type(datatype)
-		self.get_child_dict(datatype)[self.get_raw_child_id(_id)] = _id
-		out = self.client.get_collection(type(self)).update(
+		self.children.add(*args)
+		self.client.get_collection(type(self)).update(
 					{'_id':self._id}, 
-					{'$set':{'children':self.children}},
+					{'$set':{'children':self.children.childtype_dicts}},
 					upsert=False
 		)
 
 
 	def iter_children(self, datatype):
-		for child_id in self.get_child_ids():
+		for child_id in self.children.iter_ids():
 			yield self.get_child(self, datatype)
 
 

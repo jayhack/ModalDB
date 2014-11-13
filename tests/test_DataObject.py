@@ -70,7 +70,8 @@ class Test_DataObject(unittest.TestCase):
 													'present':True,
 													'data':'hello, world!'
 												}
-									}
+									},
+							'children':{}
 						}
 
 

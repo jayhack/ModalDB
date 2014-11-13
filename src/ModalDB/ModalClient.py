@@ -152,7 +152,7 @@ class ModalClient(object):
 	def is_valid_datatype(self, datatype):
 		return datatype in self.get_datatypes()
 
-	def get_children_datatypes(self, datatype):
+	def get_childtypes(self, datatype):
 		assert self.is_valid_datatype(datatype)
 		if not 'contains' in self.get_schema(datatype):
 			return set([])
@@ -167,11 +167,11 @@ class ModalClient(object):
 		return self.get_schema(datatype)[key]['filename']
 
 	def is_leaf_type(self, datatype):
-		return len(self.get_children_datatypes(datatype)) == 0
+		return len(self.get_childtypes(datatype)) == 0
 
 	def get_root_types(self):
 		ds = self.get_datatypes()
-		return ds.difference(set.union(*[self.get_children_datatypes(d) for d in ds]))
+		return ds.difference(set.union(*[self.get_childtypes(d) for d in ds]))
 
 	def is_root_type(self, datatype):
 		return datatype in self.get_root_types()
@@ -266,7 +266,7 @@ class ModalClient(object):
 		self.ensure_dir_exists(root)
 
 		#=====[ Step 2: create subdirectories for child datatypes	]=====
-		for d in self.get_children_datatypes(datatype):
+		for d in self.get_childtypes(datatype):
 			self.ensure_dir_exists(os.path.join(root, d.__name__))
 
 		#=====[ Step 3: (cp|mv) disk items	]=====
@@ -318,9 +318,7 @@ class ModalClient(object):
 			mongo_doc['items'][k] = {'present':True, 'data':item_data[k]}
 
 		#=====[ Step 4: mongo_doc['children']	]=====
-		children = self.get_children_datatypes(datatype)
-		if len(children) > 0:
-			mongo_doc['children'] = {c.__name__:{} for c in children}
+		mongo_doc['children'] = {c.__name__:{} for c in self.get_childtypes(datatype)}
 
 		return mongo_doc
 		
@@ -379,6 +377,7 @@ class ModalClient(object):
 			parent.add_child(datatype, _id)
 
 		#=====[ Step 7: create and return datatype	]=====
+		print schema
 		return datatype(mongo_doc, schema, self)
 
 

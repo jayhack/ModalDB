@@ -93,34 +93,42 @@ class ChildContainer(object):
 
 
 	################################################################################
-	####################[ GET/ADD	]###############################################
+	####################[ GET/ADD/ITER	]###########################################
 	################################################################################
+
+	def sanitize_childtype(self, childtype=None):
+		"""
+			returns appropriate childtype 
+		"""
+		#=====[ Case: No childtypes; cant get/add/iter children	]=====
+		if len(self.childtypes) == 0:
+			raise Exception("No childtypes defined in Schema; operation illegal")
+
+		#=====[ Case: One childtype	]=====
+		if len(self.childtypes) == 1:
+			if childtype is None or childtype == self.get_only_childtype():
+				return self.get_only_childtype()
+			else:
+				raise TypeError("Invalid childtype; only one is %s" % self.get_only_childtype().__name__) 
+
+		#=====[ Case: Multiple childtypes	]=====
+		else:
+			if childtype is None:
+				raise TypeError("Multiple childtypes exist; need to specify one")
+			if not self.is_valid_childtype(childtype):
+				raise TypeError("Not a valid childtype: %s" % datatype.__name__)
+			return childtype
+
 
 	def sanitize(self, *args):
 		"""
 			sanitizes **args; raises exceptions if appropriate;
 			returns (childtype, raw_id) 
 		"""
-
-		#=====[ Case: No childtypes: can't get/add children	]=====
-		if len(self.childtypes) == 0:
-			raise Exception("No childtypes defined in Schema; operation illegal")
-
-		#=====[ Case: just child_id specified	]=====
 		if len(args) == 1:
-			if not len(self.childtypes) == 1:
-				raise TypeError("Multiple childtypes exist; need to specify one")
-			return (self.get_only_childtype(), self.to_raw_id(args[0]))
-
-
-		#=====[ Case: datatype, child_id specified	]=====
+			return self.sanitize_childtype(None), self.to_raw_id(args[0])
 		elif len(args) == 2:
-			if not self.is_valid_childtype(args[0]):
-				raise TypeError("Not a valid childtype: %s" % args[0].__name__)
-			return (args[0], self.to_raw_id(args[1]))
-
-
-		#=====[ Case: invalid # of arguments	]=====
+			return self.sanitize_childtype(args[0]), self.to_raw_id(args[1])
 		else:
 			raise Exception("Invalid number of arguments")
 
@@ -142,6 +150,8 @@ class ChildContainer(object):
 
 	def add(self, *args):
 		"""
+			adds a child to this ChildContainer
+
 			Args:
 			-----
 			- (Optional, first): childtype (can omit if there's only one)
@@ -151,6 +161,20 @@ class ChildContainer(object):
 		full_id = self.to_full_id(raw_id)
 		childtype_dict = self.get_childtype_dict(childtype)
 		childtype_dict[raw_id] = full_id
+
+
+	def iter(self, childtype=None):
+		"""
+			Iterates through all children of passed childtype
+			When there's only one childtype, you can omit 'datatype'
+			parameter
+		"""
+		datatype = self.sanitize_childtype(childtype)
+		for full_id in self.get_childtype_dict(childtypes).iter_values():
+			yield full_id
+
+
+
 
 
 

@@ -175,7 +175,6 @@ class Test_ModalSchema(unittest.TestCase):
 		self.reset()
 		client = ModalClient(root=data_dir)
 		client.clear_db()
-		print self.video_data
 		video = client.insert(Video, 'test_video', self.video_data, method='mv')
 		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='mv')
 
@@ -199,20 +198,20 @@ class Test_ModalSchema(unittest.TestCase):
 		self.reset()
 		client = ModalClient(root=data_dir)
 		client.clear_db()
-		video = client.insert(Video, 'test_video', self.video_data, method='cp')
-		client.insert(Frame, 'test_frame_1', self.frame_data, parent=video, method='cp')
-		client.insert(Frame, 'test_frame_2', self.frame_data, parent=video, method='cp')
-		client.insert(Frame, 'test_frame_3', self.frame_data, parent=video, method='cp')
+		video = client.insert(Video, 'video_1', self.video_data, method='cp')
+		client.insert(Frame, 'frame_1', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_2', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_3', self.frame_data, parent=video, method='cp')
 
-		video = client.get(Video, 'test_video')
+		video = client.get(Video, 'video_1')
 
-		frame1 = video.get_child(Frame, 0)
-		frame2 = video.get_child(Frame, 1)
-		frame3 = video.get_child(Frame, 2)				
+		frame1 = video.get_child(Frame, 'frame_1')
+		frame2 = video.get_child(Frame, 'frame_2')
+		frame3 = video.get_child(Frame, 'frame_3')
 
 		self.assertEqual(frame3['subtitles'], 'hello, world!')
 		self.assertEqual(frame3['image'].shape, (512, 512, 3))
-		self.assertEqual(frame3._id, 'test_video/test_frame_3')
+		self.assertEqual(frame3._id, 'video_1/frame_3')
 
 	
 
