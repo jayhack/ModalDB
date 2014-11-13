@@ -43,9 +43,12 @@ class Test_ChildContainer(unittest.TestCase):
 			-------------------------------
 			Should throw an exception upon trying to get children
 		"""
+		schema = {'contains':[]}
 		mongo_doc = {'children':{}}
-		c = ChildContainer('parent_1', mongo_doc)
-		c.get_id(Frame, 'child_1')
+
+		c = ChildContainer('parent_1', schema, mongo_doc)
+
+		c.get(Frame, 'child_1')
 
 
 	def test_single_childtype_get(self):
@@ -55,12 +58,15 @@ class Test_ChildContainer(unittest.TestCase):
 			Constructs a ChildContainer a single childtype, tests
 			get method
 		"""
+		schema = {'contains':[Frame]}
 		mongo_doc = {'children':{}}
 		mongo_doc['children'] = {'Frame':{'frame_1':'parent_id/frame_1'}}
-		c = ChildContainer('parent_id', mongo_doc)
 
-		self.assertEqual(c.get_full_id('frame_1'), 'parent_id/frame_1')
-		self.assertEqual(c.get_full_id(Frame, 'frame_1'), 'parent_id/frame_1')
+		c = ChildContainer('parent_id', schema, mongo_doc)
+
+		self.assertEqual(c.get('frame_1')[0], Frame)
+		self.assertEqual(c.get('frame_1')[1], 'parent_id/frame_1')		
+		self.assertEqual(c.get(Frame, 'frame_1')[1], 'parent_id/frame_1')
 
 
 	def test_multiple_childtype_get(self):
@@ -70,13 +76,18 @@ class Test_ChildContainer(unittest.TestCase):
 			Constructs a ChildContainer w/ multiple childtypes, tests
 			get method
 		"""
+		schema = {'contains':[Video, Frame]}
 		mongo_doc = {'children':{}}
 		mongo_doc['children']['Frame'] = {'frame_1':'parent_id/frame_1'}
 		mongo_doc['children']['Video'] = {'video_1':'parent_id/video_1'}
-		c = ChildContainer('parent_id', mongo_doc)
 
-		self.assertEqual(c.get_full_id(Frame, 'frame_1'), 'parent_id/frame_1')
-		self.assertEqual(c.get_full_id(Video, 'video_1'), 'parent_id/video_1')		
+		c = ChildContainer('parent_id', schema, mongo_doc)
+
+		self.assertEqual(c.get(Frame, 'frame_1')[0], Frame)
+		self.assertEqual(c.get(Frame, 'frame_1')[1], 'parent_id/frame_1')		
+		self.assertEqual(c.get(Video, 'video_1')[0], Video)
+		self.assertEqual(c.get(Video, 'video_1')[1], 'parent_id/video_1')		
+
 
 
 	@raises(TypeError)
@@ -86,10 +97,11 @@ class Test_ChildContainer(unittest.TestCase):
 			-----------------------------------------
 			Tries to get_child with a bad childtype
 		"""
+		schema = {'contains':[Frame]}
 		mongo_doc = {'children':{}}
 		mongo_doc['children'] = {'Frame':{'frame_1':'parent_id/frame_1'}}
-		c = ChildContainer('parent_1', mongo_doc)
-		c.get_full_id(Video, 'frame_1')
+		c = ChildContainer('parent_1', schema, mongo_doc)
+		c.get(Video, 'frame_1')
 
 
 	@raises(KeyError)
@@ -99,10 +111,11 @@ class Test_ChildContainer(unittest.TestCase):
 			----------------------------------------
 			Tries to get_child with a bad childtype
 		"""
+		schema = {'contains':[Frame]}
 		mongo_doc = {'children':{}}
 		mongo_doc['children'] = {'Frame':{'frame_1':'parent_id/frame_1'}}
-		c = ChildContainer('parent_1', mongo_doc)
-		c.get_full_id(Frame, 'frame_2')
+		c = ChildContainer('parent_1', schema, mongo_doc)
+		c.get(Frame, 'frame_2')
 
 
 
@@ -121,9 +134,10 @@ class Test_ChildContainer(unittest.TestCase):
 			-------------------------------
 			Should throw an exception upon trying to get children
 		"""
+		schema = {'contains':[]}
 		mongo_doc = {'children':{}}
 		c = ChildContainer('parent_1', mongo_doc)
-		c.add_child(Frame, 'child_1')
+		c.add(Frame, 'child_1')
 
 
 	def test_single_childtype_add(self):
@@ -133,18 +147,23 @@ class Test_ChildContainer(unittest.TestCase):
 			Constructs a ChildContainer with a single childtype, tests 
 			add method
 		"""
+		schema = {'contains':[Frame]}
 		mongo_doc = {'children':{}}
 		mongo_doc['children'] = {'Frame':{'frame_1':'parent_id/frame_1'}}
-		c = ChildContainer('parent_id', mongo_doc)
+		c = ChildContainer('parent_id', schema, mongo_doc)
 
-		c.add_child('frame_2')
-		c.add_child(Frame, 'frame_3')
+		c.add('frame_2')
+		c.add(Frame, 'frame_3')
 
-		self.assertEqual(c.get_full_id('frame_2'), 'parent_id/frame_2')
-		self.assertEqual(c.get_full_id(Frame, 'frame_2'), 'parent_id/frame_2')		
+		self.assertEqual(c.get('frame_2')[0], Frame)
+		self.assertEqual(c.get('frame_2')[1], 'parent_id/frame_2')
+		self.assertEqual(c.get(Frame, 'frame_2')[0], Frame)
+		self.assertEqual(c.get(Frame, 'frame_2')[1], 'parent_id/frame_2')
 
-		self.assertEqual(c.get_full_id('frame_3'), 'parent_id/frame_3')
-		self.assertEqual(c.get_full_id(Frame, 'frame_3'), 'parent_id/frame_3')	
+		self.assertEqual(c.get('frame_3')[0], Frame)
+		self.assertEqual(c.get('frame_3')[1], 'parent_id/frame_3')
+		self.assertEqual(c.get(Frame, 'frame_3')[0], Frame)
+		self.assertEqual(c.get(Frame, 'frame_3')[1], 'parent_id/frame_3')
 
 
 	def test_multiple_childtype_add(self):
@@ -154,16 +173,19 @@ class Test_ChildContainer(unittest.TestCase):
 			Constructs a ChildContainer with multiple childtypes, tests
 			add method
 		"""
+		schema = {'contains':[Frame, Video]}
 		mongo_doc = {'children':{}}
 		mongo_doc['children']['Frame'] = {'frame_1':'parent_id/frame_1'}
 		mongo_doc['children']['Video'] = {'video_1':'parent_id/video_1'}
-		c = ChildContainer('parent_id', mongo_doc)
+		c = ChildContainer('parent_id', schema, mongo_doc)
 
-		c.add_child(Frame, 'frame_2')
-		c.add_child(Video, 'video_2')
+		c.add(Frame, 'frame_2')
+		c.add(Video, 'video_2')
 
-		self.assertEqual(c.get_full_id(Frame, 'frame_2'), 'parent_id/frame_2')
-		self.assertEqual(c.get_full_id(Video, 'video_2'), 'parent_id/video_2')	
+		self.assertEqual(c.get(Frame, 'frame_2')[0], Frame)
+		self.assertEqual(c.get(Frame, 'frame_2')[1], 'parent_id/frame_2')		
+		self.assertEqual(c.get(Video, 'video_2')[0], Video)
+		self.assertEqual(c.get(Video, 'video_2')[1], 'parent_id/video_2')
 
 
 

@@ -40,13 +40,16 @@ class ChildContainer(object):
 	"""
 	id_joiner = '/'
 
-	def __init__(self, parent_id, mongo_doc):
+	def __init__(self, parent_id, schema, mongo_doc):
 		""""
 			mongo_doc: document containing a DataObject
 		"""
 		self.parent_id = parent_id
 		self.parent_prefix = parent_id + self.id_joiner
+		self.childtypes = schema['contains']
 		self.childtype_dicts = mongo_doc['children']
+		for c in self.childtypes:
+			assert c.__name__ in self.childtype_dicts.keys()
 
 
 
@@ -55,20 +58,16 @@ class ChildContainer(object):
 	####################[ UTILS	]###################################################
 	################################################################################
 
-	def get_childtypes(self):
-		return self.childtype_dicts.keys()
-
 	def no_childtypes(self):
-		return len(self.get_childtypes()) == 0
+		return len(self.childtypes) == 0
 
 	def is_valid_childtype(self, datatype):
-		return datatype.__name__ in self.get_childtypes()
+		return datatype in self.childtypes
 
 	def get_only_childtype(self):
-		childtypes = self.get_childtypes()
-		if not len(childtypes) == 1:
+		if not len(self.childtypes) == 1:
 			raise Exception("You need to specify the child's datatype")
-		return childtypes[0]
+		return self.childtypes[0]
 
 	def is_full_id(self, _id):
 		return _id.startswith(self.parent_prefix)
@@ -88,8 +87,8 @@ class ChildContainer(object):
 			return self.parent_prefix + _id
 		return _id
 
-	def get_childtype_dict(self, datatype_str):
-		return self.childtype_dicts[datatype_str]
+	def get_childtype_dict(self, datatype):
+		return self.childtype_dicts[datatype.__name__]
 
 
 
@@ -102,15 +101,14 @@ class ChildContainer(object):
 			sanitizes **args; raises exceptions if appropriate;
 			returns (childtype, raw_id) 
 		"""
-		childtypes = self.get_childtypes()
 
 		#=====[ Case: No childtypes: can't get/add children	]=====
-		if len(childtypes) == 0:
+		if len(self.childtypes) == 0:
 			raise Exception("No childtypes defined in Schema; operation illegal")
 
 		#=====[ Case: just child_id specified	]=====
 		if len(args) == 1:
-			if not len(childtypes) == 1:
+			if not len(self.childtypes) == 1:
 				raise TypeError("Multiple childtypes exist; need to specify one")
 			return (self.get_only_childtype(), self.to_raw_id(args[0]))
 
@@ -119,7 +117,7 @@ class ChildContainer(object):
 		elif len(args) == 2:
 			if not self.is_valid_childtype(args[0]):
 				raise TypeError("Not a valid childtype: %s" % args[0].__name__)
-			return (args[0].__name__, self.to_raw_id(args[1]))
+			return (args[0], self.to_raw_id(args[1]))
 
 
 		#=====[ Case: invalid # of arguments	]=====
@@ -127,8 +125,10 @@ class ChildContainer(object):
 			raise Exception("Invalid number of arguments")
 
 
-	def get_full_id(self, *args):
+	def get(self, *args):
 		"""
+			Returns child's datatype and full id
+
 			Args:
 			-----
 			- (Optional, first): childtype (can omit if there's only one)
@@ -136,10 +136,11 @@ class ChildContainer(object):
 		"""
 		childtype, raw_id = self.sanitize(*args)		
 		childtype_dict = self.get_childtype_dict(childtype)
-		return self.get_childtype_dict(childtype)[raw_id]
+		full_id = childtype_dict[raw_id]
+		return childtype, full_id
 
 
-	def add_child(self, *args):
+	def add(self, *args):
 		"""
 			Args:
 			-----
