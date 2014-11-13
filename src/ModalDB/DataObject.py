@@ -176,6 +176,9 @@ class DataObject(object):
 
 
 	def get_child(self, datatype, index):
+		"""
+			Grab a child DataObject by *index*
+		"""
 		assert self.is_child_type(datatype)
 		child_ids = self.get_child_ids(datatype)
 		assert index >= 0 and index < len(child_ids)
