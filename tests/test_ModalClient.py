@@ -175,6 +175,7 @@ class Test_ModalSchema(unittest.TestCase):
 		self.reset()
 		client = ModalClient(root=data_dir)
 		client.clear_db()
+		print self.video_data
 		video = client.insert(Video, 'test_video', self.video_data, method='mv')
 		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='mv')
 

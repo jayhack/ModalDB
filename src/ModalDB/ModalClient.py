@@ -140,6 +140,12 @@ class ModalClient(object):
 	######################[ --- UTILS --- ]#############################################################
 	####################################################################################################
 
+	def get_collection(self, datatype):
+		return self.db[datatype.__name__]
+
+	def get_schema(self, datatype):
+		return self.schema[datatype]
+
 	def get_datatypes(self):
 		return set(self.schema.keys())
 
@@ -148,10 +154,17 @@ class ModalClient(object):
 
 	def get_children_datatypes(self, datatype):
 		assert self.is_valid_datatype(datatype)
-		if not 'contains' in self.schema[datatype]:
+		if not 'contains' in self.get_schema(datatype):
 			return set([])
 		else:
 			return set(self.schema[datatype]['contains'])
+
+	def get_item_names(self, datatype):
+		return set(self.get_schema(datatype).keys()).difference(set(['contains']))
+
+	def get_item_filename(self, datatype, key):
+		assert self.is_valid_datatype(datatype)
+		return self.get_schema(datatype)[key]['filename']
 
 	def is_leaf_type(self, datatype):
 		return len(self.get_children_datatypes(datatype)) == 0
@@ -163,18 +176,15 @@ class ModalClient(object):
 	def is_root_type(self, datatype):
 		return datatype in self.get_root_types()
 
-	def get_collection(self, datatype):
-		return self.db[datatype.__name__]
-
-	def get_schema(self, datatype):
-		return self.schema[datatype]
-
 	def get_root_type_dir(self, datatype):
 		return os.path.join(self.root, datatype.__name__)
 
 
+
+
+
 	####################################################################################################
-	######################[ --- GETTING/INSERTING --- ]#################################################
+	######################[ --- GETTING --- ]###########################################################
 	####################################################################################################
 
 	def get(self, datatype, _id):
@@ -188,6 +198,13 @@ class ModalClient(object):
 		schema = self.get_schema(datatype)
 		return datatype(mongo_doc, schema, self)
 
+
+
+
+
+	####################################################################################################
+	######################[ --- INSERTING --- ]#########################################################
+	####################################################################################################
 
 	def get_disk_items(self, datatype, item_data):
 		"""
@@ -203,6 +220,38 @@ class ModalClient(object):
 		return {k:v for k,v in item_data.items() if self.get_schema(datatype)[k]['mode'] == 'memory'}
 
 
+	def sanitize_item_data(self, datatype, item_data):
+		"""
+			sanitizes item_data:
+				- no items that don't exist in datatype's schema
+				- all other items get set to None
+		"""
+		#=====[ Step 1: must be a dict	]=====
+		if not type(item_data) == dict:
+			raise TypeError("item_data must be a dict")
+
+		all_items 		= self.get_item_names(datatype)
+		named_items 	= set(item_data.keys())
+		outside_items 	= named_items.difference(all_items)
+		missing_items 	= all_items.difference(named_items)		
+
+		#=====[ Step 2: no nonexistant elements	]=====
+		if len(outside_items) > 0:
+			raise Exception("Items don't exist for datatype %s: %s" % (datatype.__name__, str(outside_items)))
+
+		#=====[ Step 3: fill in missing items	]=====
+		for item_name in missing_items:
+			item_data[item_name] = None
+
+		#=====[ Step 3: valid paths for disk items	]=====
+		for k, v in self.get_disk_items(datatype, item_data).items():
+			if not v is None:
+				if not os.path.exists(v):
+					raise Exception("Path for item %s doesn't exist: %s" % (k, v))
+
+		return item_data
+
+
 	def ensure_dir_exists(self, path):
 		if not os.path.exists(path):
 			os.mkdir(path)
@@ -216,23 +265,24 @@ class ModalClient(object):
 		#=====[ Step 1: create root directory (DONT OVERWRITE)	]=====
 		self.ensure_dir_exists(root)
 
-		#=====[ Step 2: create subdirectories for children	]=====
+		#=====[ Step 2: create subdirectories for child datatypes	]=====
 		for d in self.get_children_datatypes(datatype):
-			path = os.path.join(root, d.__name__)
-			self.ensure_dir_exists(path)
+			self.ensure_dir_exists(os.path.join(root, d.__name__))
 
-		#=====[ Step 3: get disk items	]=====
+		#=====[ Step 3: (cp|mv) disk items	]=====
 		schema = self.get_schema(datatype)
-		disk_items = self.get_disk_items(datatype, item_data)
+		for key, old_path in self.get_disk_items(datatype, item_data).items():
 
-		#=====[ Step 4: copy items	]=====
-		for key,old_path in disk_items.items():
-			filename = schema[key]['filename']
-			new_path = os.path.join(root, filename)
+			#=====[ Case: user didn't specify	]=====
+			if old_path is None:
+				continue
+
+			new_path = os.path.join(root, self.get_item_filename(datatype, key))
 
 			#=====[ Case: same path	]=====
-			if os.path.samefile(old_path, new_path):
-				continue
+			if os.path.exists(new_path):
+				if os.path.samefile(old_path, new_path):
+					continue
 
 			#=====[ Case: cp	]=====
 			if method == 'cp':
@@ -273,8 +323,7 @@ class ModalClient(object):
 			mongo_doc['children'] = {c.__name__:[] for c in children}
 
 		return mongo_doc
-
-
+		
 
 	def insert(self, datatype, _id, item_data, parent=None, method='cp'):
 		"""
@@ -299,24 +348,20 @@ class ModalClient(object):
 				'image':'/path/to/image.png',
 			}
 		"""
+		schema = self.get_schema(datatype)
+
 		#=====[ Step 1: sanitize datatype/_id/method	]=====
 		assert self.is_valid_datatype(datatype)
 		assert type(_id) in [str, unicode]
 		assert method in ['cp', 'mv']
 		
 		#=====[ Step 2: sanitize item data	]=====
-		assert type(item_data) == dict 
-		schema = self.get_schema(datatype)
-		for k, v in item_data.items():
-			assert k in schema
-			if schema[k]['mode'] == 'disk':
-				print v
-				assert os.path.exists(v)
+		item_data = self.sanitize_item_data(datatype, item_data)
 
 		#=====[ Step 3: get root directory, _id from parent	]=====
 		if parent is None:
 			parent_dir = self.get_root_type_dir(datatype)
-			root = os.path.join(parent_dir, _id)
+			root = os.path.abspath(os.path.join(parent_dir, _id))
 		else:
 			parent_dir = parent.get_child_dir(datatype)
 			root = os.path.join(parent_dir, _id)
