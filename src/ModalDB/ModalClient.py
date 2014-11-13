@@ -202,6 +202,19 @@ class ModalClient(object):
 		return self.mongo_doc_to_dataobject(datatype, mongo_doc)
 
 
+	def get_random(self, datatype):
+		"""
+			returns random object of type datatype
+		"""
+		collection = self.get_collection(datatype)
+		cursor = collection.find()
+		random_ix = random.randint(0, cursor.count())
+		mongo_doc = cursor.next()
+		for _ in range(random_ix):
+			mongo_doc = cursor.next()
+		return self.mongo_doc_to_dataobject(datatype, mongo_doc)
+
+
 	def iter(self, datatype):
 		"""
 			iterates through all objects of given datatype

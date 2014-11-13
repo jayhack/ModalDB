@@ -187,6 +187,25 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertEqual(video['thumbnail'].shape, (512, 512, 3))
 		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
+	def test_get_random(self):
+		"""
+			BASIC RANDOM RETRIEVAL OF INSERTED FRAME AND VIDEO
+			--------------------------------------------------
+			constructs a video and a frame, inserts them via mv, then
+			retrieves them
+		"""
+		self.reset()
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+		video = client.insert(Video, 'video_1', self.video_data, method='cp')		
+		client.insert(Frame, 'frame_1', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_2', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_3', self.frame_data, parent=video, method='cp')
+
+		frame = client.get_random(Frame)
+		self.assertEqual(frame['image'].shape, (512, 512, 3))
+
+
 
 	def test_get_child(self):
 		"""

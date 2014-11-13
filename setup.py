@@ -13,6 +13,8 @@ setup(
 			'scipy',
 			'pandas',
 			'scikit-learn',
-			'pymongo'
+			'pymongo',
+			'dill',
+			
 		]
 )
