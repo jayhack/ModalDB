@@ -170,5 +170,3 @@ class Test_DataObject(unittest.TestCase):
 		self.assertTrue(len(d.present_items()) == 0)
 
 
-
-

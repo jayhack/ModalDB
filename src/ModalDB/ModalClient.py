@@ -140,9 +140,6 @@ class ModalClient(object):
 	######################[ --- UTILS --- ]#############################################################
 	####################################################################################################
 
-	def get_collection(self, datatype):
-		return self.db[datatype.__name__]
-
 	def get_schema(self, datatype):
 		return self.schema[datatype]
 
@@ -151,6 +148,10 @@ class ModalClient(object):
 
 	def is_valid_datatype(self, datatype):
 		return datatype in self.get_datatypes()
+
+	def get_collection(self, datatype):
+		assert self.is_valid_datatype(datatype)
+		return self.db[datatype.__name__]
 
 	def get_childtypes(self, datatype):
 		assert self.is_valid_datatype(datatype)
@@ -184,19 +185,30 @@ class ModalClient(object):
 
 
 	####################################################################################################
-	######################[ --- GETTING --- ]###########################################################
+	######################[ --- GET/ITER --- ]##########################################################
 	####################################################################################################
+
+	def mongo_doc_to_dataobject(self, datatype, mongo_doc):
+		return datatype(mongo_doc, self.get_schema(datatype), self)
 
 	def get(self, datatype, _id):
 		"""
 			returns object of type datatype and named _id
 		"""
-		assert self.is_valid_datatype(datatype)
 		mongo_doc = self.get_collection(datatype).find_one({'_id':_id})
 		if not mongo_doc:
 			raise KeyError("No such object in DB")
-		schema = self.get_schema(datatype)
-		return datatype(mongo_doc, schema, self)
+		return self.mongo_doc_to_dataobject(datatype, mongo_doc)
+
+
+	def iter(self, datatype):
+		"""
+			iterates through all objects of given datatype
+		"""
+		cursor = self.get_collection(datatype).find()
+		for i in xrange(cursor.count()):
+			yield self.mongo_doc_to_dataobject(datatype, cursor.next())
+
 
 
 
@@ -377,7 +389,6 @@ class ModalClient(object):
 			parent.add_child(datatype, _id)
 
 		#=====[ Step 7: create and return datatype	]=====
-		print schema
 		return datatype(mongo_doc, schema, self)
 
 

@@ -214,5 +214,23 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertEqual(frame3._id, 'video_1/frame_3')
 
 	
+	def test_iter(self):
+		"""
+			ModalClient: ITERATION THROUGH FRAMES
+			-------------------------------------
+			iterates through all frames 
+		"""
+		self.reset()
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+		video = client.insert(Video, 'video_1', self.video_data, method='cp')
+		client.insert(Frame, 'frame_1', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_2', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_3', self.frame_data, parent=video, method='cp')
+
+		for frame in client.iter(Frame):
+			self.assertEqual(type(frame), Frame)
+			self.assertEqual(frame['image'].shape, (512, 512, 3))
+
 
 
