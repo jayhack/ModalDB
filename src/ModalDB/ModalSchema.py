@@ -141,9 +141,9 @@ class ModalSchema(object):
 			if not type(obj_dict['contains']) == list:
 				raise TypeError
 			if not all(issubclass(x, DataObject) for x in obj_dict['contains']):
-				raise TypeError
+				raise TypeError("'contains' must consist of DataObject subclasses")
 		else:
-			obj_dict['contains'] = {}
+			obj_dict['contains'] = []
 
 		#=====[ Step 2: items formatting	]=====
 		if not all([type(k) == str for k in obj_dict.keys()]):
