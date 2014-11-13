@@ -20,6 +20,7 @@ from copy import copy, deepcopy
 import nose
 from nose.tools import *
 
+from ModalDB import *
 from ModalDB.ChildContainer import ChildContainer
 
 class Test_ChildContainer(unittest.TestCase):
@@ -91,7 +92,7 @@ class Test_ChildContainer(unittest.TestCase):
 		c.get_full_id(Video, 'frame_1')
 
 
-	@raises(TypeError)
+	@raises(KeyError)
 	def test_access_bad_child_id(self):
 		"""
 			ChildContainer: ACCESS WITH BAD CHILD_ID
@@ -143,7 +144,7 @@ class Test_ChildContainer(unittest.TestCase):
 		self.assertEqual(c.get_full_id(Frame, 'frame_2'), 'parent_id/frame_2')		
 
 		self.assertEqual(c.get_full_id('frame_3'), 'parent_id/frame_3')
-		self.assertEqual(c.get_full_id(Frame, 'frame_2'), 'parent_id/frame_3')	
+		self.assertEqual(c.get_full_id(Frame, 'frame_3'), 'parent_id/frame_3')	
 
 
 	def test_multiple_childtype_add(self):

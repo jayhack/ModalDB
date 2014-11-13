@@ -65,31 +65,31 @@ class ChildContainer(object):
 		return datatype.__name__ in self.get_childtypes()
 
 	def get_only_childtype(self):
-		if not len(self.get_childtypes) == 1:
+		childtypes = self.get_childtypes()
+		if not len(childtypes) == 1:
 			raise Exception("You need to specify the child's datatype")
-		return self.get_childtypes()[0]
+		return childtypes[0]
 
 	def is_full_id(self, _id):
 		return _id.startswith(self.parent_prefix)
 
 	def is_raw_id(self, _id):
-		return not self.is_full(_id)
+		return not self.is_full_id(_id)
 
 	def to_raw_id(self, _id):
 		_id = str(_id)
-		if self.is_raw_id(_id):
+		if self.is_full_id(_id):
 			return _id[len(self.parent_prefix):]
 		return _id
 
 	def to_full_id(self, _id):
 		_id = str(_id)
-		if self.is_full_id(_id):
+		if self.is_raw_id(_id):
 			return self.parent_prefix + _id
 		return _id
 
-	def get_childtype_dict(self, datatype):
-		assert self.is_valid_childtype(datatype)
-		return self.childtype_dicts[datatype.__name__]
+	def get_childtype_dict(self, datatype_str):
+		return self.childtype_dicts[datatype_str]
 
 
 
@@ -97,57 +97,56 @@ class ChildContainer(object):
 	####################[ GET/ADD	]###############################################
 	################################################################################
 
-	def sanitize(self, func):
+	def sanitize(self, *args):
 		"""
-			Wraps get/add_child functions; Calls them with two arguments:
-			- childtype: (valid) type of the child
-			- raw_id: raw id of the child, i.e. 'frame_1' not 'video_1/frame_1'
+			sanitizes **args; raises exceptions if appropriate;
+			returns (childtype, raw_id) 
 		"""
-		def func_wrapper(**args):
-			childtypes = self.get_childtypes()
+		childtypes = self.get_childtypes()
 
-			#=====[ Case: No childtypes: can't get/add children	]=====
-			if len(childtypes) == 0:
-				raise Exception("No childtypes defined in Schema; operation illegal")
+		#=====[ Case: No childtypes: can't get/add children	]=====
+		if len(childtypes) == 0:
+			raise Exception("No childtypes defined in Schema; operation illegal")
 
-			#=====[ Case: just child_id specified	]=====
-			if len(args) == 1:
-				if not len(childtypes) == 1:
-					raise TypeError("Multiple childtypes exist; need to specify one")
-				return func(self.get_only_datatype(), args)
-
-			#=====[ Case: datatype, child_id specified	]=====
-			elif len(args) == 2:
-				if not self.is_valid_childtype(args[0]):
-					raise TypeError("Not a valid childtype: %s" % args[0].__name__)
-				return func(args[0], self.to_raw_id(args[1]))
-
-			#=====[ Case: invalid # of arguments	]=====
-			else:
-				raise Exception("Invalid number of arguments")
-
-		return func_wrapper
+		#=====[ Case: just child_id specified	]=====
+		if len(args) == 1:
+			if not len(childtypes) == 1:
+				raise TypeError("Multiple childtypes exist; need to specify one")
+			return (self.get_only_childtype(), self.to_raw_id(args[0]))
 
 
-	@self.sanitize
-	def get_full_id(self, childtype, raw_id):
+		#=====[ Case: datatype, child_id specified	]=====
+		elif len(args) == 2:
+			if not self.is_valid_childtype(args[0]):
+				raise TypeError("Not a valid childtype: %s" % args[0].__name__)
+			return (args[0].__name__, self.to_raw_id(args[1]))
+
+
+		#=====[ Case: invalid # of arguments	]=====
+		else:
+			raise Exception("Invalid number of arguments")
+
+
+	def get_full_id(self, *args):
 		"""
 			Args:
 			-----
 			- (Optional, first): childtype (can omit if there's only one)
 			- raw id of child
 		"""
+		childtype, raw_id = self.sanitize(*args)		
+		childtype_dict = self.get_childtype_dict(childtype)
 		return self.get_childtype_dict(childtype)[raw_id]
 
 
-	@sanitize
-	def add_child(self, childtype, raw_id):
+	def add_child(self, *args):
 		"""
 			Args:
 			-----
 			- (Optional, first): childtype (can omit if there's only one)
 			- id of child; can be either full or raw
 		"""
+		childtype, raw_id = self.sanitize(*args)
 		full_id = self.to_full_id(raw_id)
 		childtype_dict = self.get_childtype_dict(childtype)
 		childtype_dict[raw_id] = full_id
