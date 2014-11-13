@@ -169,9 +169,9 @@ class ChildContainer(object):
 			When there's only one childtype, you can omit 'datatype'
 			parameter
 		"""
-		datatype = self.sanitize_childtype(childtype)
-		for full_id in self.get_childtype_dict(childtypes).iter_values():
-			yield full_id
+		childtype = self.sanitize_childtype(childtype)
+		for full_id in self.get_childtype_dict(childtype).iterkeys():
+			yield childtype, full_id
 
 
 

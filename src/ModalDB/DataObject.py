@@ -199,9 +199,9 @@ class DataObject(object):
 		)
 
 
-	def iter_children(self, datatype):
-		for child_id in self.children.iter_ids():
-			yield self.get_child(self, datatype)
+	def iter_children(self, childtype=None):
+		for childtype, child_id in self.children.iter(childtype):
+			yield self.get_child(childtype, child_id)
 
 
 
