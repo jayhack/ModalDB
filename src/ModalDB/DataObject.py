@@ -169,8 +169,8 @@ class DataObject(object):
 
 	def get_child(self, *args):
 		"""
-			Returns a child object; Must specify child's datatype there are
-				multiple childtypes for this object.
+			Returns a child object; Must specify child's datatype if 
+			there are multiple childtypes for this object.
 
 			Args:
 			-----
@@ -179,6 +179,23 @@ class DataObject(object):
 		"""
 		datatype, full_id = self.children.get(*args)
 		return self.client.get(datatype, full_id)
+
+	def get_random_child(self, datatype=None):
+		"""
+			Returns a child object; Must specify child's datatype if 
+			there are multiple childtypes for this object.
+
+			Args:
+			-----
+			- (Optional, first): childtype (can omit if there's only one)
+		"""
+		datatype, child_id = self.children.get_random(datatype)
+		return self.get_child(datatype, child_id)
+
+
+	def iter_children(self, childtype=None):
+		for childtype, child_id in self.children.iter(childtype):
+			yield self.get_child(childtype, child_id)
 
 
 	def add_child(self, *args):
@@ -199,9 +216,6 @@ class DataObject(object):
 		)
 
 
-	def iter_children(self, childtype=None):
-		for childtype, child_id in self.children.iter(childtype):
-			yield self.get_child(childtype, child_id)
 
 
 

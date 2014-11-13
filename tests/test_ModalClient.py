@@ -234,7 +234,26 @@ class Test_ModalSchema(unittest.TestCase):
 			self.assertEqual(frame['image'].shape, (512, 512, 3))
 
 
-	
+	def test_get_random_child(self):
+		"""
+			ModalClient: RANDOM ACCESS TO DATAOBJECT CHILDREN
+			-------------------------------------------------
+			iterates through all frames 
+		"""
+		self.reset()
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+		video = client.insert(Video, 'video_1', self.video_data, method='cp')
+		client.insert(Frame, 'frame_1', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_2', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_3', self.frame_data, parent=video, method='cp')
+
+		frame1 = video.get_random_child()
+		frame2 = video.get_random_child(Frame)
+		self.assertEqual(frame1['image'].shape, (512, 512, 3))
+		self.assertEqual(frame2['image'].shape, (512, 512, 3))	
+
+
 	def test_iter(self):
 		"""
 			ModalClient: ITERATION THROUGH FRAMES

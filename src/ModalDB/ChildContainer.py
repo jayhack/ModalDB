@@ -21,6 +21,8 @@ Fall 2014
 jhack@stanford.edu
 ##################
 '''
+import random
+
 class ChildContainer(object):
 	"""
 		Class: ChildContainer
@@ -148,6 +150,30 @@ class ChildContainer(object):
 		return childtype, full_id
 
 
+	def get_random(self, childtype=None):
+		"""
+			Returns a random child's datatype and full id
+
+			Args:
+			-----
+			- (Optional, first): childtype (can omit if there's only one)
+		"""
+		childtype = self.sanitize_childtype(childtype)
+		full_id = random.choice(self.get_childtype_dict(childtype).values())
+		return childtype, full_id
+
+
+	def iter(self, childtype=None):
+		"""
+			Iterates through all children of passed childtype
+			When there's only one childtype, you can omit 'datatype'
+			parameter
+		"""
+		childtype = self.sanitize_childtype(childtype)
+		for full_id in self.get_childtype_dict(childtype).iterkeys():
+			yield childtype, full_id
+
+
 	def add(self, *args):
 		"""
 			adds a child to this ChildContainer
@@ -162,16 +188,6 @@ class ChildContainer(object):
 		childtype_dict = self.get_childtype_dict(childtype)
 		childtype_dict[raw_id] = full_id
 
-
-	def iter(self, childtype=None):
-		"""
-			Iterates through all children of passed childtype
-			When there's only one childtype, you can omit 'datatype'
-			parameter
-		"""
-		childtype = self.sanitize_childtype(childtype)
-		for full_id in self.get_childtype_dict(childtype).iterkeys():
-			yield childtype, full_id
 
 
 
