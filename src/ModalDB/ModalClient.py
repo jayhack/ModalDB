@@ -191,6 +191,7 @@ class ModalClient(object):
 	def mongo_doc_to_dataobject(self, datatype, mongo_doc):
 		return datatype(mongo_doc, self.get_schema(datatype), self)
 
+
 	def get(self, datatype, _id):
 		"""
 			returns object of type datatype and named _id
