@@ -120,8 +120,7 @@ class ModalClient(object):
 
 			#=====[ Dirs	]=====
 			if self.is_root_type(datatype):
-				if not os.path.exists(self.get_root_type_dir(datatype)):
-					os.mkdir(self.get_root_type_dir(datatype))
+				self.ensure_dir_exists(self.get_root_type_dir(datatype))
 
 
 
@@ -204,21 +203,23 @@ class ModalClient(object):
 		return {k:v for k,v in item_data.items() if self.get_schema(datatype)[k]['mode'] == 'memory'}
 
 
+	def ensure_dir_exists(self, path):
+		if not os.path.exists(path):
+			os.mkdir(path)
+
+
 	def create_object_dir(self, datatype, root, item_data, method):
 		"""
 			creates a directory to contain all disk items for this
 			object at root
 		"""
-		#=====[ Step 1: create root directory	]=====
-		if os.path.exists(root):
-			shutil.rmtree(root)
-		os.mkdir(root)
+		#=====[ Step 1: create root directory (DONT OVERWRITE)	]=====
+		self.ensure_dir_exists(root)
 
 		#=====[ Step 2: create subdirectories for children	]=====
 		for d in self.get_children_datatypes(datatype):
 			path = os.path.join(root, d.__name__)
-			if not os.path.exists(path):
-				os.mkdir(path)
+			self.ensure_dir_exists(path)
 
 		#=====[ Step 3: get disk items	]=====
 		schema = self.get_schema(datatype)
@@ -309,6 +310,7 @@ class ModalClient(object):
 		for k, v in item_data.items():
 			assert k in schema
 			if schema[k]['mode'] == 'disk':
+				print v
 				assert os.path.exists(v)
 
 		#=====[ Step 3: get root directory, _id from parent	]=====
