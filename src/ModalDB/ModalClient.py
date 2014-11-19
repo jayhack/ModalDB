@@ -407,4 +407,33 @@ class ModalClient(object):
 
 
 
+	####################################################################################################
+	######################[ --- DELETING --- ]##########################################################
+	####################################################################################################
+
+	def delete(self, datatype, _id):
+		"""
+			deletes described datatype
+
+			Args:
+			-----
+			- datatype: type of object to create
+			- _id: name of object to create 
+		"""
+		#=====[ Step 1: get the object	]=====
+		dataobject = self.get(datatype, _id)
+
+		#=====[ Step 2: remove data on filesystem	]=====
+		shutil.rmtree(dataobject.root)
+
+		#=====[ Step 3: remove data in mongodb	]=====
+		collection = self.get_collection(datatype)
+		collection.remove({'_id':dataobject._id})
+
+
+
+
+
+
+
 
