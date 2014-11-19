@@ -228,7 +228,7 @@ class DataObject(object):
 			- id of child; can be either full or raw
 		"""
 		self.children.delete(*args)
-		self.client.get_collection(type(self)).update(
+		self.client.get_collection(type(self)).remove(
 					{'_id':self._id}, 
 					{'$set':{'children':self.children.childtype_dicts}},
 					upsert=False

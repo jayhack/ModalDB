@@ -198,7 +198,7 @@ class ChildContainer(object):
 			- (Optional, first): childtype (can omit if there's only one)
 			- id of child; can be either full or raw
 		"""
-		childtype, raw_id = self.sanizie(*args)
+		childtype, raw_id = self.sanitize(*args)
 		childtype_dict = self.get_childtype_dict(childtype)
 		if not raw_id in childtype_dict:
 			raise Exception("No such child: %s" % str(raw_id))
