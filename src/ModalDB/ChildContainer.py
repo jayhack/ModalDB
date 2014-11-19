@@ -189,6 +189,21 @@ class ChildContainer(object):
 		childtype_dict[raw_id] = full_id
 
 
+	def delete(self, *args):
+		"""
+			removes a child from this ChildContainer
+
+			Args:
+			-----
+			- (Optional, first): childtype (can omit if there's only one)
+			- id of child; can be either full or raw
+		"""
+		childtype, raw_id = self.sanizie(*args)
+		childtype_dict = self.get_childtype_dict(childtype)
+		if not raw_id in childtype_dict:
+			raise Exception("No such child: %s" % str(raw_id))
+		del childtype_dict[raw_id]
+		
 
 
 

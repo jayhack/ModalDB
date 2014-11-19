@@ -217,9 +217,22 @@ class DataObject(object):
 
 
 
+	def delete_child(self, *args):
+		"""
+			Deletes a child object; must specify child's datatype if there 
+			are multiple childtypes for this object.
 
-
-
+			Args:
+			-----
+			- (Optional, first): childtype (can omit if there's only one)
+			- id of child; can be either full or raw
+		"""
+		self.children.delete(*args)
+		self.client.get_collection(type(self)).update(
+					{'_id':self._id}, 
+					{'$set':{'children':self.children.childtype_dicts}},
+					upsert=False
+		)
 
 
 

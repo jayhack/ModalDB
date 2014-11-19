@@ -166,6 +166,24 @@ class Test_ChildContainer(unittest.TestCase):
 		self.assertEqual(c.get(Frame, 'frame_3')[1], 'parent_id/frame_3')
 
 
+	@raises(Exception)
+	def test_single_childtype_delete(self):
+		"""
+			ChildContainer: SINGLE CHILDTYPE DELETE 
+			----------------------------------------
+			Constructs a ChildContainer with a single childtype, tests 
+			delete method
+		"""
+		schema = {'contains':[Frame]}
+		mongo_doc = {'children':{}}
+		mongo_doc['children'] = {'Frame':{'frame_1':'parent_id/frame_1'}}
+		c = ChildContainer('parent_id', schema, mongo_doc)
+
+		c.add(Frame, 'frame_2')
+		c.delete('frame_2')
+		self.get('frame_2')
+
+
 	def test_multiple_childtype_add(self):
 		"""
 			ChildContainer: MULTIPLE_CHILDTYPE_ADD 
