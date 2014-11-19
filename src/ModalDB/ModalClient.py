@@ -46,52 +46,24 @@ class ModalClient(object):
 
 	"""
 
-	def __init__(self, root=os.environ['DATA_DIR'], schema=None):
+	def __init__(self, root=None, schema=None):
 		"""
 			Connect to MongoDB, load schema, find root path
 		"""
-		self.root = root
+		#=====[ Step 1: get root	]=====
+		if root is None:
+			if not 'DATA_DIR' in os.environ:
+				raise Exception("Make sure you run 'source ./configure' to set $DATA_DIR")
+			self.root = os.environ['DATA_DIR']
+		else:	
+			self.root = root
+
+		#=====[ Step 2: get schema	]=====
 		self.initialize_schema(schema)
+
+
+		#=====[ Step 2: startup mongodb	]=====
 		self.initialize_mongodb()
-
-
-
-	####################################################################################################
-	######################[ --- SCHEMA --- ]############################################################
-	####################################################################################################
-	
-	def initialize_schema(self, schema):
-		"""
-			sets self.schema
-			if schema is None, loads default one from disk.
-		"""
-		#=====[ Step 1: Set schema path	]=====
-		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
-
-		#=====[ Step 2: Load schema	]=====
-		if type(schema) == dict:
-			self.schema = ModalSchema(schema)
-		elif type(schema) == ModalSchema:
-			self.schema = schema
-		elif schema is None:
-			self.schema = self.load_schema()
-		else:
-			raise Exception("Schema type not recongized. (Should be dict or ModalSchema)")
-
-	def load_schema(self):
-		if not os.path.exists(self.schema_path):
-			raise Exception("No schema exists or was specified")
-		return ModalSchema(self.schema_path)
-
-	def save_schema(self):
-		self.schema.save(self.schema_path)
-
-	def print_schema(self):
-		pprint(self.schema.schema_dict)
-
-
-
-
 
 
 
@@ -132,6 +104,45 @@ class ModalClient(object):
 			if not db_name in ['admin', 'local']:
 				self.mongo_client.drop_database(db_name)
 		self.db = self.mongo_client.ModalDB
+
+
+
+
+
+
+	####################################################################################################
+	######################[ --- SCHEMA --- ]############################################################
+	####################################################################################################
+	
+	def initialize_schema(self, schema):
+		"""
+			sets self.schema
+			if schema is None, loads default one from disk.
+		"""
+		#=====[ Step 1: Set schema path	]=====
+		self.schema_path = os.path.join(self.root, '.ModalDB_schema.pkl')
+
+		#=====[ Step 2: Load schema	]=====
+		if type(schema) == dict:
+			self.schema = ModalSchema(schema)
+		elif type(schema) == ModalSchema:
+			self.schema = schema
+		elif schema is None:
+			self.schema = self.load_schema()
+		else:
+			raise Exception("Schema type not recongized. (Should be dict or ModalSchema)")
+
+	def load_schema(self):
+		if not os.path.exists(self.schema_path):
+			raise Exception("No schema exists or was specified")
+		return ModalSchema(self.schema_path)
+
+	def save_schema(self):
+		self.schema.save(self.schema_path)
+
+	def print_schema(self):
+		pprint(self.schema.schema_dict)
+
 
 
 
