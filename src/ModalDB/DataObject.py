@@ -200,8 +200,7 @@ class DataObject(object):
 
 	def add_child(self, *args):
 		"""
-			Returns a child object; Must specify child's datatype there are
-				multiple childtypes for this object.
+			Adds the record of the child to this dataobject's children.
 
 			Args:
 			-----
@@ -219,8 +218,8 @@ class DataObject(object):
 
 	def delete_child(self, *args):
 		"""
-			Deletes a child object; must specify child's datatype if there 
-			are multiple childtypes for this object.
+			Deletes the record of this child from this dataobject's 
+			children.
 
 			Args:
 			-----
@@ -228,11 +227,10 @@ class DataObject(object):
 			- id of child; can be either full or raw
 		"""
 		self.children.delete(*args)
-		self.client.get_collection(type(self)).remove(
+		self.client.get_collection(type(self)).update(
 					{'_id':self._id}, 
 					{'$set':{'children':self.children.childtype_dicts}},
 					upsert=False
 		)
-
 
 

@@ -411,7 +411,7 @@ class ModalClient(object):
 	######################[ --- DELETING --- ]##########################################################
 	####################################################################################################
 
-	def delete(self, datatype, _id):
+	def delete(self, datatype, _id, parent=None):
 		"""
 			deletes described datatype
 
@@ -419,14 +419,21 @@ class ModalClient(object):
 			-----
 			- datatype: type of object to create
 			- _id: name of object to create 
+			- parent: parent object
 		"""
-		#=====[ Step 1: get the object	]=====
-		dataobject = self.get(datatype, _id)
+		#=====[ Case: parent exists	]=====
+		if not parent is None:
+			dataobject = parent.get_child(datatype, _id)
+			parent.delete_child(datatype, _id)
 
-		#=====[ Step 2: remove data on filesystem	]=====
+		#=====[ Case: otherwise	]=====
+		else:
+			dataobject = self.get(datatype, _id)
+
+		#=====[ Step 1: remove data on filesystem	]=====
 		shutil.rmtree(dataobject.root)
 
-		#=====[ Step 3: remove data in mongodb	]=====
+		#=====[ Step 2: remove data in mongodb	]=====
 		collection = self.get_collection(datatype)
 		collection.remove({'_id':dataobject._id})
 
