@@ -205,7 +205,8 @@ class ModalClient(object):
 
 	def get(self, datatype, _id):
 		"""
-			returns object of type datatype and named _id
+			returns object of type datatype and named _id. Only call this 
+			to get 
 		"""
 		mongo_doc = self.get_collection(datatype).find_one({'_id':_id})
 		if not mongo_doc:
