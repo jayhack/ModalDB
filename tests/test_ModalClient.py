@@ -165,6 +165,26 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertEqual(frame['image'].shape, (512, 512, 3))
 
 
+	def test_deletion(self):
+		"""
+			BASIC DELETION OF FRAME AND VIDEO 
+			---------------------------------
+			constructs a video and a frame, deletes them 
+		"""
+		self.reset()
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+		video = client.insert(Video, 'test_video', self.video_data, method='mv')
+		frame = client.insert(Frame, 'test_frame', self.frame_data, parent=video, method='mv')
+
+		client.delete(Frame, 'test_frame', parent=video)
+		self.assertFalse(os.path.exists(os.path.join(data_dir, 'Video/test_video/Frame/test_frame')))
+
+		client.delete(Video, 'test_video')
+		self.assertFalse(os.path.exists(os.path.join(data_dir, 'Video/test_video/')))
+
+
+
 	def test_get_basic(self):
 		"""
 			BASIC RETRIEVAL OF INSERTED FRAME AND VIDEO

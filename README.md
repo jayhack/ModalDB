@@ -29,8 +29,8 @@ In [4]: skeleton = frame['skeleton']
 ## Setup/Installation:
 ```
 	~$: cd ModalDB
-	~$: source ./configure.sh
-	~$: mongodb --dbpath=$MONGODB_DBPATH
+	~$: python setup.py install
+	~$: mongodb --dbpath=/path/to/data/directory
 	~$: ipython
 	In [1]: from ModalDB import *
 	...
