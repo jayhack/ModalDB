@@ -208,10 +208,10 @@ class ModalSchema(object):
 
 
 	################################################################################
-	####################[ Adding Items	]###########################################
+	####################[ Modifying Schema	]#######################################
 	################################################################################
 
-	def add_data_object(self, object_type, object_dict):
+	def add_data_object(self, datatype, object_dict):
 		"""
 			adds an item to specified data_object 
 		"""
@@ -219,12 +219,22 @@ class ModalSchema(object):
 		self.schema_dict[object_type] = object_dict
 
 
-	def add_item(self, data_object, item_name, item_dict):
+	def delete_data_object(self, datatype, object_dict):
+		"""
+			adds an item to specified data_object 
+		"""
+		object_dict = self.parse_data_object(object_dict)
+		self.schema_dict[object_type] = object_dict
+
+
+	def add_item(self, datatype, item_name, item_dict):
 		"""
 			adds an item to specified data_object 
 		"""
 		item_dict = self.parse_item(item_name, item_dict)
 		self.schema_dict[data_object][item_name] = item_dict
+
+
 
 
 
