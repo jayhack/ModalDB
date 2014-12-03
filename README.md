@@ -26,8 +26,8 @@ Jay Hack (jhack@stanford.edu), Fall 2014
 # Setup:
 ```
 	~$: cd ModalDB
-	~$: source ./configure.sh
-	~$: mongodb --dbpath=$MONGODB_DBPATH
+	~$: python setup.py install
+	~$: mongodb --dbpath=/path/to/data/directory
 	~$: ipython
 	In [1]: from ModalDB import *
 	...
