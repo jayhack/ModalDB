@@ -232,7 +232,7 @@ class ModalSchema(object):
 			adds an item to specified data_object 
 		"""
 		item_dict = self.parse_item(item_name, item_dict)
-		self.schema_dict[data_object][item_name] = item_dict
+		self.schema_dict[datatype][item_name] = item_dict
 
 
 
