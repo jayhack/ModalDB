@@ -164,6 +164,16 @@ class Test_ModalSchema(unittest.TestCase):
 		self.assertTrue(schema.schema_dict[Frame]['depth_image']['filename'] == 'depth_image.mat')
 
 
+	def test_delete_item_1(self):
+		"""
+			REMOVE ITEM FROM FRAME
+			----------------------
+			should remove an item from Frame in the schema
+		"""
+		schema = ModalSchema(deepcopy(self.schema_ex))
+		schema.delete_item(Frame, 'subtitles')
+		self.assertFalse('depth_image' in schema.schema_dict[Frame])
+
 
 	
 	################################################################################

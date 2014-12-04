@@ -59,13 +59,10 @@ class Test_ModalSchema(unittest.TestCase):
 		self.schema_ex = schema_ex
 		self.mongo_doc = {
 							'_id': 'test_video',
-							'children': {'Frame': []},
- 							'items': {
- 										'image':{'present': True},
-										'subtitles':{
-														'present': True,
-														'data':'hello, world!'
-													}
+							'children':{'Frame': []},
+ 							'items':{
+ 										'image':'image.png',
+										'subtitles':'hello, world!',
 									},
 							'root':self.root
 						}

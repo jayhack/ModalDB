@@ -22,6 +22,7 @@ jhack@stanford.edu
 ##################
 '''
 import os
+from collections import defaultdict
 
 class ModalDict(object):
 	"""
@@ -30,43 +31,35 @@ class ModalDict(object):
 
 	def __init__(self, mongo_doc, datatype_schema):
 		"""
-			initializes self.keys, self.metadata, self.data
+			initializes self.keys, self.present, self.data
 		"""
 		assert not self.mode is None
-		self.mongo_doc 	= mongo_doc
 		self.keys 		= set([k for k,v in datatype_schema.items() if not k == 'contains' and v['mode'] == self.mode])
-		self.metadata 	= {k:mongo_doc['items'][k] for k in self.keys}
-		self.data 		= {k:None for k in self.keys}
-
-
-	def update_item_metadata(self):
-		"""
-			updates metadata on items. Override
-		"""
-		for k in self.keys:
-			self.metadata[k]['present'] = self.item_present(k)
+		self.present 	= defaultdict(lambda: False, {k:True for k in mongo_doc['items'].keys()})
+		self.data 		= defaultdict(lambda: None)
 
 
 	def item_present(self, key):
 		"""
 			returns true if the named item present. Override.
 		"""
-		raise NotImplementedError
+		return self.present[key]
+	
 
-
+	@property
 	def present_items(self):
 		"""
-			returns names of items that are present.
+			returns set of names of items that are present
 		"""
-		self.update_item_metadata()
-		return set([k for k in self.keys if self.metadata[k]['present']])
+		return set(filter(self.item_present, self.keys))
 
 
+	@property
 	def absent_items(self):
 		"""
 			returns set of items that are not present.
 		"""
-		return self.keys.difference(self.present_items())
+		return self.keys - self.present_items
 
 
 	def __contains__(self, key):
@@ -89,7 +82,7 @@ class ModalDict(object):
 
 	def __setitem__(self, key, value):
 		self.detect_keyerror(key)
-		self.metadata[key]['present'] = True
+		self.present[key] = True
 		return self.set_item(key, value)
 
 
@@ -99,8 +92,8 @@ class ModalDict(object):
 
 	def __delitem__(self, key):
 		self.detect_keyerror(key)
-		self.metadata[key]['present'] = False
-		self.del_item(key)
+		self.present[key] = False
+		self.del_item(key)	
 
 
 	def del_item(self, key):
@@ -126,12 +119,7 @@ class MemoryDict(ModalDict):
 
 	def __init__(self, mongo_doc, datatype_schema):
 		super(MemoryDict, self).__init__(mongo_doc, datatype_schema)
-		self.data = {k:mongo_doc['items'][k]['data'] for k in self.keys}
-		self.update_item_metadata()
-
-
-	def item_present(self, key):
-		return not self[key] is None
+		self.data.update({k:mongo_doc['items'][k] for k in self.present_items})
 
 
 	def get_item(self, key):
@@ -165,22 +153,24 @@ class DiskDict(ModalDict):
 	def __init__(self, mongo_doc, datatype_schema):
 		super(DiskDict, self).__init__(mongo_doc, datatype_schema)
 
-		root = mongo_doc['root']
+		self.root = mongo_doc['root']
 		items = datatype_schema
 
 		self.load_funcs = {k:items[k]['load_func'] for k in self.keys}
 		self.save_funcs = {k:items[k]['save_func'] for k in self.keys}
-		self.paths 		= {k:os.path.join(root, items[k]['filename']) for k in self.keys}
+		self.paths 		= {k:os.path.join(self.root, items[k]['filename']) for k in self.keys}
 		self.data 		= {k:None for k in self.keys}
 
-		self.update_item_metadata()
+		self.check_paths_exist()
 
 
-	def item_present(self, key):
+	def check_paths_exist(self):
 		"""
-			returns true if the item present on disk 
+			makes sure that all items listed actually exist
 		"""
-		return os.path.exists(self.paths[key])
+		for k in self.present_items:
+			if not os.path.exists(self.paths[k]):
+				raise Exception("Item %s not on disk (should be at %s) - did you delete it?" % (k, self.paths[k]))
 
 
 	def load_item(self, key):
@@ -222,9 +212,8 @@ class DiskDict(ModalDict):
 			sets self.data[key] to None, removes item 
 			from disk
 		"""
-		del self.data[key]
-		os.remove(self.paths[key])
 		self.data[key] = None
+		os.remove(self.paths[key])
 
 
 

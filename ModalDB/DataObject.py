@@ -58,8 +58,8 @@ class DataObject(object):
 		contains:
 			- _id: self identifier 
 			- root: path to this object's directory
+			- items: metadata on contained items
 			- children: mapping from child type to children
-			- items: metadata on contained items (exists, etc.)
 
 		children:
 		---------
@@ -108,6 +108,20 @@ class DataObject(object):
 		return self.schema[key]['mode']
 
 
+	def update_mongo_doc(self):
+		"""
+			updates the mongodb representation 
+			of this DataObject 
+		"""
+		new_item_dict = {}
+		for k in self.items['disk'].present_items:
+			new_item_dict[k] = self.items['disk'].paths[k]
+		for k in self.items['memory'].present_items:
+			new_item_dict[k] = self.items['memory'].data[k]
+		self.client.update_mongo_doc(type(self), self._id, new_item_dict)
+
+
+
 	def __getitem__(self, key):
 		self.detect_keyerror(key)
 		return self.items[self.get_mode(key)][key]
@@ -115,12 +129,17 @@ class DataObject(object):
 
 	def __setitem__(self, key, value):
 		self.detect_keyerror(key)
-		self.items[self.get_mode(key)][key] = value
+		if self.items[self.get_mode(key)][key] is None:	
+			self.items[self.get_mode(key)][key] = value
+			self.update_mongo_doc()
+		else:
+			self.items[self.get_mode(key)][key] = value
 
 
 	def __delitem__(self, key):
 		self.detect_keyerror(key)
 		del self.items[self.get_mode(key)][key]
+		self.update_mongo_doc()
 
 
 
@@ -130,28 +149,20 @@ class DataObject(object):
 	####################[ ITEM METADATA ]###########################################
 	################################################################################
 
-	def update_item_metadata(self):
-		"""
-			updates self.mongo_doc to reflect current state
-			(i.e. which items are present)
-		"""
-		for modal_dict in self.items.values():
-			modal_dict.update_item_metadata()
-
-
+	@property
 	def present_items(self):
 		"""
 			returns set of names of items that are present
 		"""
-		return set.union(*[md.present_items() for md in self.items.values()])
+		return set.union(*[md.present_items for md in self.items.values()])
 
-
+	@property
 	def absent_items(self):
 		"""
 			returns set of names of items that are in schema 
 			yet not present 
 		"""
-		return set.union(*[md.absent_items() for md in self.items.values()])
+		return set.union(*[md.absent_items for md in self.items.values()])
 
 
 
@@ -179,6 +190,7 @@ class DataObject(object):
 		"""
 		datatype, full_id = self.children.get(*args)
 		return self.client.get(datatype, full_id)
+
 
 	def get_random_child(self, datatype=None):
 		"""
