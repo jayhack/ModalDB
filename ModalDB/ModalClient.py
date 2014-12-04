@@ -43,7 +43,6 @@ class ModalClient(object):
 		# Directly Accessing Frames
 		for frame in mc.iter_frames():
 			...
-
 	"""
 
 	def __init__(self, root=None, schema=None):

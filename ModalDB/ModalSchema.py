@@ -235,6 +235,11 @@ class ModalSchema(object):
 		self.schema_dict[datatype][item_name] = item_dict
 
 
+	def remove_item(self, datatype, item_name):
+		"""
+			removes item from specified data object 
+		"""
+		del self.schema_dict[datatype][item_name]
 
 
 
