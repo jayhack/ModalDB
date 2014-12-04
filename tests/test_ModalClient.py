@@ -24,6 +24,7 @@ import unittest
 from copy import copy, deepcopy
 import nose
 from nose.tools import *
+import numpy as np
 from scipy.io import loadmat, savemat
 from scipy.misc import imsave, imread
 
@@ -290,6 +291,61 @@ class Test_ModalSchema(unittest.TestCase):
 
 		for frame in client.iter(Frame):
 			self.assertEqual(frame['image'].shape, (512, 512, 3))
+
+
+
+	################################################################################
+	####################[ ADDING/REMOVING ITEMS	]###################################
+	################################################################################
+
+	def test_add_item(self):
+		"""
+			ModalClient: ADDING ITEMS
+			-------------------------
+			adds an item to the schema and tries to set it 
+		"""
+		self.reset()
+		client = ModalClient(root=data_dir)
+		client.clear_db()
+		video = client.insert(Video, 'video_1', self.video_data, method='cp')
+		client.insert(Frame, 'frame_1', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_2', self.frame_data, parent=video, method='cp')
+		client.insert(Frame, 'frame_3', self.frame_data, parent=video, method='cp')
+
+		#=====[ Add an item for frames 	]=====
+		client.add_item(Frame, 'skeleton', {	
+											'mode':'disk',
+											'filename':'skeleton.pkl',
+											'load_func':lambda p: pickle.load(open(p,'r')),
+											'save_func':lambda x, p: pickle.dump(x, open(p, 'w'))
+											})
+
+		#=====[ Set this item for a few frames	]=====
+		skel = '... NOT ACTUALLY A SKELETON ...'
+		frame = video.get_child('frame_1')
+		frame['skeleton'] = skel
+
+		#=====[ make sure it holds	]=====
+		frame_1 = video.get_child('frame_1')
+		frame_2 = video.get_child('frame_2')
+		frame_3 = video.get_child('frame_3')
+		self.assertTrue(frame_1['skeleton'] == skel)
+		self.assertTrue('skeleton' in frame_1.present_items)
+		self.assertTrue(frame_2['skeleton'] is None)
+		self.assertTrue('skeleton' in frame_2.absent_items)
+		self.assertTrue(frame_3['skeleton'] is None)	
+		self.assertFalse('skeleton' in frame_3.present_items)
+
+
+		#=====[ Delete it again	]=====
+		del frame_1['skeleton']
+		self.assertTrue(frame_1['skeleton'] is None)
+		self.assertFalse('skeleton' in frame_1.present_items)
+
+		#=====[ Remove item from schema	]=====
+		client.delete_item(Frame, 'skeleton')
+		frame_1 = video.get_child('frame_1')
+
 
 
 

@@ -153,12 +153,12 @@ class DiskDict(ModalDict):
 	def __init__(self, mongo_doc, datatype_schema):
 		super(DiskDict, self).__init__(mongo_doc, datatype_schema)
 
-		root = mongo_doc['root']
+		self.root = mongo_doc['root']
 		items = datatype_schema
 
 		self.load_funcs = {k:items[k]['load_func'] for k in self.keys}
 		self.save_funcs = {k:items[k]['save_func'] for k in self.keys}
-		self.paths 		= {k:os.path.join(root, items[k]['filename']) for k in self.keys}
+		self.paths 		= {k:os.path.join(self.root, items[k]['filename']) for k in self.keys}
 		self.data 		= {k:None for k in self.keys}
 
 		self.check_paths_exist()
@@ -194,8 +194,6 @@ class DiskDict(ModalDict):
 		"""
 			returns named item; loads from disk if necessary
 		"""
-		print key 
-		print self.present_items
 		if self.data[key] is None and self.item_present(key):
 			self.load_item(key)
 		return self.data[key]

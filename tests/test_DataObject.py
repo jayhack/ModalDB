@@ -122,44 +122,6 @@ class Test_DataObject(unittest.TestCase):
 		self.assertEqual(d['subtitles'], 'konnichiwa, sekai!')
 
 
-	def test_delitem(self):
-		"""
-			BASIC DELITEM TEST
-			------------------
-			removes both, makes sure it works
-		"""
-		self.reset_image()
-		d = DataObject(deepcopy(self.mongo_doc), self.schema_ex[Frame], None)
-		
-		del d['image']
-		del d['subtitles']
 
-		self.assertTrue(d['image'] is None)
-		self.assertTrue(not self.image_exists())
-		self.assertTrue(d['subtitles'] is None)
-
-
-	def test_update_present(self):
-		"""
-			BASIC ITEM PRESENT UPDATE TEST
-			-------------------------------
-			checks on items present, absent, etc.
-		"""
-		self.reset_image()
-		mongo_doc = deepcopy(self.mongo_doc)
-		d = DataObject(mongo_doc, self.schema_ex[Frame], None)
-
-		self.assertTrue('image' in mongo_doc['items'])
-		self.assertTrue('subtitles' in mongo_doc['items'])
-		self.assertTrue('image' in d.present_items())
-		self.assertTrue('subtitles' in d.present_items())
-		self.assertTrue(len(d.present_items()) == 2)
-
-		del d['image']
-		del d['subtitles']
-
-		self.assertFalse('image' in d.present_items())
-		self.assertFalse('subtitles' in d.present_items())
-		self.assertTrue(len(d.present_items()) == 0)
 
 

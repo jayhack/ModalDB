@@ -131,16 +131,35 @@ class ModalClient(object):
 		else:
 			raise Exception("Schema type not recongized. (Should be dict or ModalSchema)")
 
+
 	def load_schema(self):
 		if not os.path.exists(self.schema_path):
 			raise Exception("No schema exists or was specified")
 		return ModalSchema(self.schema_path)
 
+
 	def save_schema(self):
 		self.schema.save(self.schema_path)
 
+
 	def print_schema(self):
 		pprint(self.schema.schema_dict)
+
+
+	def add_item(self, datatype, item_name, item_dict):
+		"""
+			adds an item to the schema, overwriting old ones.
+			item_dict describes the schema of the item
+		"""
+		self.schema.add_item(datatype, item_name, item_dict)
+
+
+	def delete_item(self, datatype, item_name, now=True):
+		"""
+			deletes the named item from the database 
+			TODO: perform this lazily?
+		"""
+		self.schema.delete_item(datatype, item_name)
 
 
 
@@ -198,6 +217,15 @@ class ModalClient(object):
 	######################[ --- GET/ITER --- ]##########################################################
 	####################################################################################################
 
+	def update_mongo_doc(self, datatype, _id, new_item_dict):
+		"""
+			given a new mongo_doc, updates the object named _id 
+			and of specified datatype in MongoDB 
+		"""
+		collection = self.get_collection(datatype)
+		collection.update({'_id':_id}, {'$set': {'items':new_item_dict}})
+
+
 	def mongo_doc_to_dataobject(self, datatype, mongo_doc):
 		return datatype(mongo_doc, self.get_schema(datatype), self)
 
@@ -227,7 +255,7 @@ class ModalClient(object):
 
 
 	####################################################################################################
-	######################[ --- INSERTING --- ]#########################################################
+	######################[ --- ADD/REMOVE DATA --- ]###################################################
 	####################################################################################################
 
 	def get_disk_items(self, datatype, item_data):
@@ -334,8 +362,8 @@ class ModalClient(object):
 			}
 		"""
 		return {
-					'root':root,
 					'_id':_id,
+					'root':root,
 					'items':copy(item_data),
 					'children':{c.__name__:{} for c in self.get_childtypes(datatype)}
 				}
@@ -388,7 +416,6 @@ class ModalClient(object):
 
 		#=====[ Step 5: create + insert mongo doc	]=====
 		mongo_doc = self.create_mongo_doc(datatype, _id, root, item_data)
-		print mongo_doc
 		self.get_collection(datatype).insert(mongo_doc)
 
 		#=====[ Step 6: add to parent, if necessary	]=====
@@ -398,13 +425,6 @@ class ModalClient(object):
 		#=====[ Step 7: create and return datatype	]=====
 		return datatype(mongo_doc, schema, self)
 
-
-
-
-
-	####################################################################################################
-	######################[ --- DELETING --- ]##########################################################
-	####################################################################################################
 
 	def delete(self, datatype, _id, parent=None):
 		"""
