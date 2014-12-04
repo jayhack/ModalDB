@@ -232,7 +232,7 @@ class ModalClient(object):
 
 	def get_disk_items(self, datatype, item_data):
 		"""
-			returns portion of item_data describing disk items 
+			returns portion of item_data describing disk items
 		"""
 		return {k:v for k,v in item_data.items() if self.get_schema(datatype)[k]['mode'] == 'disk'}
 
@@ -257,15 +257,10 @@ class ModalClient(object):
 		all_items 		= self.get_item_names(datatype)
 		named_items 	= set(item_data.keys())
 		outside_items 	= named_items.difference(all_items)
-		missing_items 	= all_items.difference(named_items)		
 
 		#=====[ Step 2: no nonexistant elements	]=====
 		if len(outside_items) > 0:
 			raise Exception("Items don't exist for datatype %s: %s" % (datatype.__name__, str(outside_items)))
-
-		#=====[ Step 3: fill in missing items	]=====
-		for item_name in missing_items:
-			item_data[item_name] = None
 
 		#=====[ Step 3: valid paths for disk items	]=====
 		for k, v in self.get_disk_items(datatype, item_data).items():
@@ -322,29 +317,28 @@ class ModalClient(object):
 		"""
 			returns doc that can be inserted into a mongodb collection
 			to represent this item.
+
+			Doc will look as follows:
+			{
+				'root':/path/to/datatype/directory,
+				'_id':/unique/id/for/datatype,
+				'items': {
+							'disk_item_1':/path/to/file, # denotes that disk_item_1 should be there
+							...
+							'memory_item_1':'...' # absent if not filled in.
+						}
+				'children':{
+								ChildType1:{}, # maps names to dataobject ids
+								...
+							}
+			}
 		"""
-		#=====[ Step 1: get disk/memory items	]=====
-		schema = self.get_schema(datatype)
-		disk_items = self.get_disk_items(datatype, item_data)
-		memory_items = self.get_memory_items(datatype, item_data)
-
-		#=====[ Step 2: basic mongo_doc	]=====
-		mongo_doc = {
-						'root':root,
-						'_id':_id,
-					}
-
-		#=====[ Step 3: mongo_doc['items']	]=====
-		mongo_doc['items'] = {}
-		for k in disk_items.keys():
-			mongo_doc['items'][k] = {'present':None}
-		for k,v in memory_items.items():
-			mongo_doc['items'][k] = {'present':True, 'data':item_data[k]}
-
-		#=====[ Step 4: mongo_doc['children']	]=====
-		mongo_doc['children'] = {c.__name__:{} for c in self.get_childtypes(datatype)}
-
-		return mongo_doc
+		return {
+					'root':root,
+					'_id':_id,
+					'items':copy(item_data),
+					'children':{c.__name__:{} for c in self.get_childtypes(datatype)}
+				}
 		
 
 	def insert(self, datatype, _id, item_data, parent=None, method='cp'):
@@ -394,6 +388,7 @@ class ModalClient(object):
 
 		#=====[ Step 5: create + insert mongo doc	]=====
 		mongo_doc = self.create_mongo_doc(datatype, _id, root, item_data)
+		print mongo_doc
 		self.get_collection(datatype).insert(mongo_doc)
 
 		#=====[ Step 6: add to parent, if necessary	]=====

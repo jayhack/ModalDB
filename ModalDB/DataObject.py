@@ -58,8 +58,8 @@ class DataObject(object):
 		contains:
 			- _id: self identifier 
 			- root: path to this object's directory
+			- items: metadata on contained items (absent when item is absent)
 			- children: mapping from child type to children
-			- items: metadata on contained items (exists, etc.)
 
 		children:
 		---------
@@ -130,20 +130,11 @@ class DataObject(object):
 	####################[ ITEM METADATA ]###########################################
 	################################################################################
 
-	def update_item_metadata(self):
-		"""
-			updates self.mongo_doc to reflect current state
-			(i.e. which items are present)
-		"""
-		for modal_dict in self.items.values():
-			modal_dict.update_item_metadata()
-
-
 	def present_items(self):
 		"""
 			returns set of names of items that are present
 		"""
-		return set.union(*[md.present_items() for md in self.items.values()])
+		return set.union(*[md.present_items for md in self.items.values()])
 
 
 	def absent_items(self):
@@ -151,7 +142,7 @@ class DataObject(object):
 			returns set of names of items that are in schema 
 			yet not present 
 		"""
-		return set.union(*[md.absent_items() for md in self.items.values()])
+		return set.union(*[md.absent_items for md in self.items.values()])
 
 
 
@@ -179,6 +170,7 @@ class DataObject(object):
 		"""
 		datatype, full_id = self.children.get(*args)
 		return self.client.get(datatype, full_id)
+
 
 	def get_random_child(self, datatype=None):
 		"""

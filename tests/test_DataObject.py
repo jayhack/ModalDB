@@ -63,13 +63,8 @@ class Test_DataObject(unittest.TestCase):
 							'_id':'12345',
 							'root':self.root,
 							'items':{
-										'image':{
-													'present':True,
-												},
-										'subtitles':{
-													'present':True,
-													'data':'hello, world!'
-												}
+										'image':self.image_path,
+										'subtitles':'hello, world!'
 									},
 							'children':{}
 						}
@@ -144,9 +139,9 @@ class Test_DataObject(unittest.TestCase):
 		self.assertTrue(d['subtitles'] is None)
 
 
-	def test_update_item_metadata(self):
+	def test_update_present(self):
 		"""
-			BASIC ITEM METADATA UPDATE TEST 
+			BASIC ITEM PRESENT UPDATE TEST
 			-------------------------------
 			checks on items present, absent, etc.
 		"""
@@ -154,8 +149,8 @@ class Test_DataObject(unittest.TestCase):
 		mongo_doc = deepcopy(self.mongo_doc)
 		d = DataObject(mongo_doc, self.schema_ex[Frame], None)
 
-		self.assertTrue(mongo_doc['items']['image']['present'])
-		self.assertTrue(mongo_doc['items']['subtitles']['present'])
+		self.assertTrue('image' in mongo_doc['items'])
+		self.assertTrue('subtitles' in mongo_doc['items'])
 		self.assertTrue('image' in d.present_items())
 		self.assertTrue('subtitles' in d.present_items())
 		self.assertTrue(len(d.present_items()) == 2)
@@ -163,8 +158,6 @@ class Test_DataObject(unittest.TestCase):
 		del d['image']
 		del d['subtitles']
 
-		self.assertFalse(mongo_doc['items']['image']['present'])
-		self.assertFalse(mongo_doc['items']['subtitles']['present'])
 		self.assertFalse('image' in d.present_items())
 		self.assertFalse('subtitles' in d.present_items())
 		self.assertTrue(len(d.present_items()) == 0)
