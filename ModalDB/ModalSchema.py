@@ -104,6 +104,13 @@ class ModalSchema(object):
 	def keys(self):
 		return self.schema_dict.keys()
 
+	def datatypes(self):
+		"""
+			iterator over stored datatypes 
+		"""
+		for x in filter(lambda x: issubclass(DataObject, x), self.keys()):
+			yield x
+
 		
 
 

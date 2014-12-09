@@ -120,7 +120,7 @@ class Frame(DataObject):
 
 
 	def __str__(self):
-		return """Frame: %s""" % self['_id']
+		return """Frame: %s""" % self.id
 
 
 

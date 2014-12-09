@@ -45,17 +45,15 @@ class ModalClient(object):
 			...
 	"""
 
-	def __init__(self, root=None, schema=None):
+	def __init__(self, root, schema=None):
 		"""
 			Connect to MongoDB, load schema, find root path
 		"""
 		#=====[ Step 1: get root	]=====
-		if root is None:
-			if not 'DATA_DIR' in os.environ:
-				raise Exception("Make sure you run 'source ./configure' to set $DATA_DIR")
-			self.root = os.environ['DATA_DIR']
-		else:	
-			self.root = root
+		if not os.path.exists(root):
+			raise Exception("Root not valid: %s", root)
+		self.root = root
+
 
 		#=====[ Step 2: get schema	]=====
 		self.initialize_schema(schema)
@@ -157,9 +155,11 @@ class ModalClient(object):
 	def delete_item(self, datatype, item_name, now=True):
 		"""
 			deletes the named item from the database 
-			TODO: perform this lazily?
+			TODO: actually go through and delete them all
 		"""
 		self.schema.delete_item(datatype, item_name)
+		for datatype in self.schema.datatypes():
+			pass
 
 
 
@@ -441,7 +441,7 @@ class ModalClient(object):
 
 	def delete(self, datatype, _id, parent=None):
 		"""
-			deletes described datatype
+			deletes dataobject of specified datatype, _id, parent.
 
 			Args:
 			-----
