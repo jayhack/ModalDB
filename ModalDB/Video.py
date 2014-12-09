@@ -114,5 +114,5 @@ class Video(DataObject):
 	def __str__(self):
 		return """
 =====[ Video: %s ]=====
-%s""" % (self['_id'], str(self.frames_df.describe()))
+%s""" % (self._id, str(self.frames_df.describe()))
 
