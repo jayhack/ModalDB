@@ -73,7 +73,7 @@ class Frame(DataObject):
 			returns *list* of top n masks as:
 				[(mask_ix, mask) ...]
 		"""
-		ordered_ixs = np.argsort(self.scores[:,0])[::-1]
+		ordered_ixs = np.argsort(self['scores'][:,0])[::-1]
 		return [(i, self.get_mask(i)) for i in ordered_ixs[:n]]
 
 
@@ -120,7 +120,7 @@ class Frame(DataObject):
 
 
 	def __str__(self):
-		return """Frame: %s""" % self.id
+		return """Frame: %s""" % self._id
 
 
 
